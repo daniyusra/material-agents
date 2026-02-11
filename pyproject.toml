@@ -1,0 +1,19 @@
+[project]
+name = "material-agents"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+
+dependencies = [
+    "langchain-ollama",
+    "langchain-core",
+    "duckdb",
+    "langgraph",
+    "altair>=6.0.0",
+    "gradio>=6.5.1",
+    "vl-convert-python>=1.9.0.post1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel"
+]
