@@ -11,12 +11,10 @@ from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Literal
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from enum import Enum
-from utils.duckdb_helpers import csv_to_duckdb, execute_sql_query, extract_unique_nouns, get_all_schema, get_table_schema
 import altair as alt
 import uuid
 
-DATA_DIR = "data/movies-w-year.csv"
-DB_PATH = "/home/daniyusra/projects/manantara-playground/chatbot/db/data.duckdb"
+from utils.database_accessor import execute_query, extract_unique_nouns, get_table_schema
 
 # region Structured Output Classes
 
@@ -77,12 +75,9 @@ class CsvToGraphAgent:
 
     PLACEHOLDER_TABLE_NAME = "movies_with_year"
 
-    def __init__(self, model : BaseChatModel, csv_path: str):
+    def __init__(self, model : BaseChatModel, table_name: str):
         self.model = model
-        self.csv_path = csv_path
-        
-        #TODO: convert to proper CSV blobbing
-        csv_to_duckdb(csv_path, CsvToGraphAgent.PLACEHOLDER_TABLE_NAME)
+        self.table_name = table_name
 
     def parse_user_question(self, state: State) -> State:
         last_message = state["messages"][-1]
@@ -100,7 +95,7 @@ No same table can appear twice.
             `"{last_message.content}"`
             
             **Schemas:**
-            {get_all_schema()}
+            {get_table_schema(self.table_name)}
         """
         llm_with_structure = self.model.with_config(temperature=0.2).with_structured_output(QueryParsing)
         response = llm_with_structure.invoke([SystemMessage(content=prompt)])
@@ -142,7 +137,7 @@ No same table can appear twice.
            
         prompt = f"""You are an AI assistant that generates SQL queries based on user questions, database schema, and unique nouns found in the relevant tables. Generate a valid SQL query to answer the user's question.
           
-If there is not enough information to write a SQL query, respond with "NOT_ENOUGH_INFO".
+If there is not enough information to write a SQL query, respond with "NOT_ENOUGH_INFO". When using nouns, use only the unique nouns.
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
 Here are some examples:
@@ -236,7 +231,7 @@ For example:
         return state
     
     def execute_sql(self, state: State)->State:
-        state["sql_result_rows"] = execute_sql_query(state["valid_sql"])["rows"]
+        state["sql_result_rows"] = execute_query(state["valid_sql"])["rows"]
 
         return state
 
