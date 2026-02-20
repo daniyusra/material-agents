@@ -93,6 +93,8 @@ def chat(req: ChatRequest):
     image = result.get("generated_chart", None)
 
     image_base64 = None
+
+    #TODO: figure out the images
     if image:
         import base64
         image_base64 = base64.b64encode(image.getvalue()).decode()
