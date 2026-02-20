@@ -14,14 +14,14 @@ BASE_URL = os.getenv(
 )
 
 def get_table_schema(table_name: str) -> str:
-    url = f"{BASE_URL}/getschema/{table_name}"
+    url = f"{BASE_URL}/api/getschema/{table_name}"
     response = requests.get(url)
 
     response.raise_for_status()
     return response.json().get("schema")
 
 def execute_query(query: str) -> ExecuteQueryResponse:
-    url = f"{BASE_URL}/executequery"
+    url = f"{BASE_URL}/api/executequery"
     session = requests.Session()
     response = session.post(
         url,

@@ -736,10 +736,12 @@ source = { virtual = "." }
 dependencies = [
     { name = "altair" },
     { name = "duckdb" },
+    { name = "fastapi" },
     { name = "gradio" },
     { name = "langchain-core" },
     { name = "langchain-ollama" },
     { name = "langgraph" },
+    { name = "uvicorn" },
     { name = "vl-convert-python" },
 ]
 
@@ -752,11 +754,13 @@ dev = [
 requires-dist = [
     { name = "altair", specifier = ">=6.0.0" },
     { name = "duckdb" },
+    { name = "fastapi", specifier = ">=0.128.7" },
     { name = "gradio", specifier = ">=6.5.1" },
     { name = "ipykernel", marker = "extra == 'dev'" },
     { name = "langchain-core" },
     { name = "langchain-ollama" },
     { name = "langgraph" },
+    { name = "uvicorn", specifier = ">=0.40.0" },
     { name = "vl-convert-python", specifier = ">=1.9.0.post1" },
 ]
 provides-extras = ["dev"]

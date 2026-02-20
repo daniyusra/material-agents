@@ -48,6 +48,7 @@ class VisualizationRecommendation(BaseModel):
 class State(MessagesState):
     """Extended state with conversation tracking"""
     question : str = Field(description="Question regarding data")
+    table_name : str = Field(description="Name of the table")
     parsed_question: QueryParsing = Field(description="Question asked by user regarding the data stored but parsed to extract its most important features")
     unique_nouns : List[str] = Field(
         default_factory=list,
@@ -75,12 +76,14 @@ class CsvToGraphAgent:
 
     PLACEHOLDER_TABLE_NAME = "movies_with_year"
 
-    def __init__(self, model : BaseChatModel, table_name: str):
+    #TODO: REFACTOR THE TABLENAME OUTTA HERE
+    #AS PER CHATGPT -> Put table_id inside the graph State
+    def __init__(self, model : BaseChatModel):
         self.model = model
-        self.table_name = table_name
 
     def parse_user_question(self, state: State) -> State:
         last_message = state["messages"][-1]
+        table_name = state["table_name"]
 
         prompt = f"""You are a data analyst that can help summarize SQL tables and parse user questions about a database. 
 Given the question and database schema, identify the relevant tables and columns. 
@@ -95,7 +98,7 @@ No same table can appear twice.
             `"{last_message.content}"`
             
             **Schemas:**
-            {get_table_schema(self.table_name)}
+            {get_table_schema(table_name)}
         """
         llm_with_structure = self.model.with_config(temperature=0.2).with_structured_output(QueryParsing)
         response = llm_with_structure.invoke([SystemMessage(content=prompt)])
