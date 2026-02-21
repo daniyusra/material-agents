@@ -1,3 +1,9 @@
+import base64
+import uuid
+import logging
+
+from io import BytesIO
+from PIL import Image
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage
@@ -7,7 +13,6 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import START, StateGraph
 from langchain_ollama import ChatOllama
 from agents.csv_to_graph import CsvToGraphAgent, State
-import uuid
 
 
 
@@ -21,6 +26,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger = logging.getLogger('uvicorn.error')
 
 #region agent setup. TODO: productionize ts
 
@@ -90,14 +97,19 @@ def chat(req: ChatRequest):
         config
     )
 
-    image = result.get("generated_chart", None)
+    #TODO: figure out the images
+    image_path = result.get("generated_chart", None)
 
     image_base64 = None
 
-    #TODO: figure out the images
-    if image:
-        import base64
-        image_base64 = base64.b64encode(image.getvalue()).decode()
+    if image_path is not None:
+        pil_image = Image.open(image_path)
+
+        buffer = BytesIO()
+        pil_image.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        image_base64 = base64.b64encode(buffer.read()).decode("utf-8")
 
     return ChatResponse(
         reply=result["messages"][-1].content,

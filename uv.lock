@@ -741,6 +741,7 @@ dependencies = [
     { name = "langchain-core" },
     { name = "langchain-ollama" },
     { name = "langgraph" },
+    { name = "pillow" },
     { name = "uvicorn" },
     { name = "vl-convert-python" },
 ]
@@ -760,6 +761,7 @@ requires-dist = [
     { name = "langchain-core" },
     { name = "langchain-ollama" },
     { name = "langgraph" },
+    { name = "pillow", specifier = ">=12.1.0" },
     { name = "uvicorn", specifier = ">=0.40.0" },
     { name = "vl-convert-python", specifier = ">=1.9.0.post1" },
 ]
