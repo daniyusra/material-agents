@@ -1,4 +1,5 @@
 import base64
+import sqlite3
 import uuid
 import logging
 
@@ -12,9 +13,9 @@ from typing import Optional
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import START, StateGraph
 from langchain_ollama import ChatOllama
+from langgraph.checkpoint.sqlite import SqliteSaver
 from agents.csv_to_graph import CsvToGraphAgent, State
-
-
+from services.llm_factory import build_llm
 
 app = FastAPI()
 app.add_middleware(
@@ -28,10 +29,10 @@ app.add_middleware(
 )
 
 logger = logging.getLogger('uvicorn.error')
+conn = sqlite3.connect("checkpoint.sqlite", check_same_thread=False)
+checkpointer = SqliteSaver(conn)
 
 #region agent setup. TODO: productionize ts
-
-llm = ChatOllama(model="qwen3:4b-instruct-2507-q4_K_M", temperature=0.1)
 
 # Initialize checkpointer for conversation memory
 checkpointer = InMemorySaver()
@@ -39,7 +40,7 @@ checkpointer = InMemorySaver()
 # Create graph builder
 graph_builder = StateGraph(State)
 
-agent = CsvToGraphAgent(llm)
+agent = CsvToGraphAgent()
 
 # Add nodes
 graph_builder.add_node("parse_user_question", agent.parse_user_question)
@@ -73,6 +74,9 @@ class ChatRequest(BaseModel):
     message: str
     table_name : str
     thread_id: Optional[str] = None
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    api_key : Optional[str] = None
 
 class ChatResponse(BaseModel):
     reply: str
@@ -84,7 +88,8 @@ def create_thread_id():
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-
+    llm = build_llm(req.provider, req.model, req.api_key)
+    
     config = (
         {"configurable": {"thread_id": req.thread_id}}
         if req.thread_id
@@ -93,7 +98,8 @@ def chat(req: ChatRequest):
 
     result = agent_graph.invoke(
         {"messages": [HumanMessage(content=req.message.strip())],
-          "table_name": req.table_name},
+          "table_name": req.table_name,
+          "llm": llm},
         config
     )
 

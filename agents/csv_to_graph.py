@@ -47,6 +47,7 @@ class VisualizationRecommendation(BaseModel):
 
 class State(MessagesState):
     """Extended state with conversation tracking"""
+    llm : BaseChatModel = Field(description="LLM used by the agent")
     question : str = Field(description="Question regarding data")
     table_name : str = Field(description="Name of the table")
     parsed_question: QueryParsing = Field(description="Question asked by user regarding the data stored but parsed to extract its most important features")
@@ -76,12 +77,8 @@ class CsvToGraphAgent:
 
     PLACEHOLDER_TABLE_NAME = "movies_with_year"
 
-    #TODO: REFACTOR THE TABLENAME OUTTA HERE
-    #AS PER CHATGPT -> Put table_id inside the graph State
-    def __init__(self, model : BaseChatModel):
-        self.model = model
-
     def parse_user_question(self, state: State) -> State:
+        print(state)
         last_message = state["messages"][-1]
         table_name = state["table_name"]
 
@@ -100,7 +97,7 @@ No same table can appear twice.
             **Schemas:**
             {get_table_schema(table_name)}
         """
-        llm_with_structure = self.model.with_config(temperature=0.2).with_structured_output(QueryParsing)
+        llm_with_structure = state["llm"].with_config(temperature=0.2).with_structured_output(QueryParsing)
         response = llm_with_structure.invoke([SystemMessage(content=prompt)])
 
         if (response.is_relevant):
@@ -174,7 +171,7 @@ SKIP ALL ROWS WHERE ANY COLUMN IS NULL or "N/A" or "".
             {unique_nouns["unique_nouns"]}
             """
           
-        response = self.model.with_config(temperature=0.2).invoke([SystemMessage(content=prompt), HumanMessage(content=human_question)])
+        response = state["llm"].with_config(temperature=0.2).invoke([SystemMessage(content=prompt), HumanMessage(content=human_question)])
 
         state["valid_sql"] = response.content
 
@@ -226,7 +223,7 @@ For example:
     "corrected_query": "SELECT * FROM users WHERE age > 25"
 }}
                 """
-        llm_with_structure = self.model.with_config(temperature=0.2).with_structured_output(SqlAgentCorrection)
+        llm_with_structure = state["llm"].with_config(temperature=0.2).with_structured_output(SqlAgentCorrection)
         response = llm_with_structure.invoke([SystemMessage(content=prompt), HumanMessage(content=human_question)])
 
         state["valid_sql"] = state['valid_sql'] if response.valid else response.corrected_query
@@ -273,7 +270,7 @@ For example:
     Reason: [Brief explanation for your recommendation]
             """
 
-        llm_with_structure = self.model.with_config(temperature=0.2).with_structured_output(VisualizationRecommendation)
+        llm_with_structure = state["llm"].with_config(temperature=0.2).with_structured_output(VisualizationRecommendation)
         response = llm_with_structure.invoke([SystemMessage(content=prompt), last_message])
         
         state["recommended_visualization"] = response.recommended_visualization
@@ -301,7 +298,7 @@ For example:
             )
         ]
 
-        response = self.model.with_config(temperature=0.2).invoke(messages)
+        response = state["llm"].with_config(temperature=0.2).invoke(messages)
 
         return {"messages": [response]} 
     
@@ -343,7 +340,7 @@ For example:
     {state['recommended_visualization']}
         """
 
-        response = self.model.with_config(temperature=0.2).invoke([SystemMessage(content=prompt), HumanMessage(content=human_inputs)])
+        response = state["llm"].with_config(temperature=0.2).invoke([SystemMessage(content=prompt), HumanMessage(content=human_inputs)])
 
         prompt = f""" 
     You are a Vega-Lite specification corrector.
@@ -412,11 +409,11 @@ For example:
         Now correct this Vega-Lite specification:
         {response.content}
         """
-        response = self.model.with_config(temperature=0.2).invoke([SystemMessage(content=prompt), HumanMessage(content=human_inputs)])
+        response = state["llm"].with_config(temperature=0.2).invoke([SystemMessage(content=prompt), HumanMessage(content=human_inputs)])
         
         return response.content
 
-    def llm_json_fix(self, text: str)->str:
+    def llm_json_fix(self, state: State, text: str)->str:
         prompt = f"""
     Your job is to FIX JSON AND CORRECT FORMAT FOR VEGA-LITE.
 
@@ -463,14 +460,14 @@ For example:
     Text:
     {text}
     """
-        response = self.model.with_config(temperature=0.2).invoke([SystemMessage(content=prompt)])
+        response = state["llm"].with_config(temperature=0.2).invoke([SystemMessage(content=prompt)])
         content = response.content
 
         return content
 
     def visualize(self, state : State):
-        vega_spec= self.vega_lite_visualizer(state)
-        vega_spec = self.llm_json_fix(vega_spec)
+        vega_spec = self.vega_lite_visualizer(state)
+        vega_spec = self.llm_json_fix(state, vega_spec)
         
         chart = alt.Chart.from_json(str(vega_spec))
         filename = str(uuid.uuid4())
@@ -507,7 +504,7 @@ For example:
             )
         ]
 
-        response = self.model.with_config(temperature=0.2).invoke(messages)
+        response = state["llm"].with_config(temperature=0.2).invoke(messages)
         
         return {"messages": [response]} 
 
