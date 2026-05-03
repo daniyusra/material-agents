@@ -3,13 +3,12 @@ import json
 import app.main as main_module
 
 
-async def _fake_stream(messages):
+async def _fake_stream(messages, provider="anthropic", file_id=None):
     yield "hello"
     yield " world"
 
 
 def _parse_sse(text: str) -> list[str]:
-    """Extract content values from an SSE response body."""
     chunks = []
     for line in text.splitlines():
         if not line.startswith("data: "):
@@ -21,45 +20,54 @@ def _parse_sse(text: str) -> list[str]:
     return chunks
 
 
-def test_anthropic_provider_streams_content(client, monkeypatch):
-    monkeypatch.setitem(main_module._providers, "anthropic", _fake_stream)
-    response = client.post(
-        "/api/chat",
-        json={"messages": [{"role": "user", "content": "hi"}], "provider": "anthropic"},
-    )
-    assert response.status_code == 200
-    assert _parse_sse(response.text) == ["hello", " world"]
-
-
-def test_openai_provider_streams_content(client, monkeypatch):
-    monkeypatch.setitem(main_module._providers, "openai", _fake_stream)
-    response = client.post(
-        "/api/chat",
-        json={"messages": [{"role": "user", "content": "hi"}], "provider": "openai"},
-    )
-    assert response.status_code == 200
-    assert _parse_sse(response.text) == ["hello", " world"]
-
-
-def test_default_provider_is_anthropic(client, monkeypatch):
-    called_with = {}
-
-    async def recording_stream(messages):
-        called_with["messages"] = messages
-        yield "ok"
-
-    monkeypatch.setitem(main_module._providers, "anthropic", recording_stream)
-    client.post("/api/chat", json={"messages": [{"role": "user", "content": "ping"}]})
-    assert called_with.get("messages") is not None
-
-
-def test_sse_ends_with_done(client, monkeypatch):
-    monkeypatch.setitem(main_module._providers, "anthropic", _fake_stream)
+def test_chat_streams_content(client, monkeypatch):
+    monkeypatch.setattr(main_module, "stream_chat", _fake_stream)
     response = client.post(
         "/api/chat",
         json={"messages": [{"role": "user", "content": "hi"}]},
     )
+    assert response.status_code == 200
+    assert _parse_sse(response.text) == ["hello", " world"]
+
+
+def test_sse_ends_with_done(client, monkeypatch):
+    monkeypatch.setattr(main_module, "stream_chat", _fake_stream)
+    response = client.post("/api/chat", json={"messages": []})
     assert "data: [DONE]" in response.text
+
+
+def test_provider_forwarded(client, monkeypatch):
+    received = {}
+
+    async def capture(messages, provider="anthropic", file_id=None):
+        received["provider"] = provider
+        yield "ok"
+
+    monkeypatch.setattr(main_module, "stream_chat", capture)
+    client.post("/api/chat", json={"messages": [], "provider": "openai"})
+    assert received["provider"] == "openai"
+
+
+def test_file_id_forwarded(client, monkeypatch):
+    received = {}
+
+    async def capture(messages, provider="anthropic", file_id=None):
+        received["file_id"] = file_id
+        yield "ok"
+
+    monkeypatch.setattr(main_module, "stream_chat", capture)
+    # bypass the file-not-found check by also patching get_record
+    monkeypatch.setattr(main_module, "get_record", lambda fid: object())
+    client.post("/api/chat", json={"messages": [], "file_id": "abc-123"})
+    assert received["file_id"] == "abc-123"
+
+
+def test_unknown_file_id_returns_404(client):
+    response = client.post(
+        "/api/chat",
+        json={"messages": [], "file_id": "does-not-exist"},
+    )
+    assert response.status_code == 404
 
 
 def test_invalid_provider_returns_422(client):
@@ -68,16 +76,3 @@ def test_invalid_provider_returns_422(client):
         json={"messages": [], "provider": "gemini"},
     )
     assert response.status_code == 422
-
-
-def test_messages_passed_through_to_stream(client, monkeypatch):
-    received = {}
-
-    async def capture(messages):
-        received["messages"] = messages
-        yield "x"
-
-    monkeypatch.setitem(main_module._providers, "anthropic", capture)
-    payload = [{"role": "user", "content": "test message"}]
-    client.post("/api/chat", json={"messages": payload, "provider": "anthropic"})
-    assert received["messages"] == payload

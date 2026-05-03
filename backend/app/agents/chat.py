@@ -1,13 +1,26 @@
-from typing import AsyncIterator
+"""
+Unified chat module. Selects the LLM provider and routes requests to the
+data agent when a file_id is present.
+"""
+
+from typing import AsyncIterator, Literal
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
-model = ChatAnthropic(
-    model="claude-opus-4-7",
-    streaming=True,
-    max_tokens=4096,
-)
+# Module-level singletons — created once, reused across requests.
+# load_dotenv() in main.py runs before this module is imported.
+_anthropic = ChatAnthropic(model="claude-opus-4-7", streaming=True, max_tokens=4096)
+_openai = ChatOpenAI(model="gpt-4o", streaming=True)
+
+
+def get_model(provider: Literal["anthropic", "openai"]):
+    if provider == "anthropic":
+        return _anthropic
+    if provider == "openai":
+        return _openai
+    raise ValueError(f"Unknown provider: {provider!r}")
 
 
 def _to_lc_messages(messages: list[dict]) -> list:
@@ -24,8 +37,18 @@ def _to_lc_messages(messages: list[dict]) -> list:
     return result
 
 
-async def stream_chat(messages: list[dict]) -> AsyncIterator[str]:
-    lc_messages = _to_lc_messages(messages)
-    async for chunk in model.astream(lc_messages):
+async def stream_chat(
+    messages: list[dict],
+    provider: Literal["anthropic", "openai"] = "anthropic",
+    file_id: str | None = None,
+) -> AsyncIterator[str]:
+    if file_id is not None:
+        from .data_agent import stream_data_chat
+        async for chunk in stream_data_chat(messages, provider, file_id):
+            yield chunk
+        return
+
+    model = get_model(provider)
+    async for chunk in model.astream(_to_lc_messages(messages)):
         if chunk.content:
             yield chunk.content

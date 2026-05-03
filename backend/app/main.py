@@ -12,8 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from .agents.chat import stream_chat as stream_anthropic
-from .agents.chat_openai import stream_chat as stream_openai
+from .agents.chat import stream_chat
 from .storage import cleanup_loop, get_record, store_file
 
 
@@ -33,13 +32,8 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-_providers = {
-    "anthropic": stream_anthropic,
-    "openai": stream_openai,
-}
 
-
-# ── Upload ───────────────────────────────────────────────────────────────────
+# ── Upload ────────────────────────────────────────────────────────────────────
 
 @app.post("/api/upload")
 async def upload(file: UploadFile):
@@ -56,7 +50,7 @@ async def upload(file: UploadFile):
     }
 
 
-# ── Chat ─────────────────────────────────────────────────────────────────────
+# ── Chat ──────────────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
     messages: list[dict]
@@ -69,10 +63,8 @@ async def chat(request: ChatRequest):
     if request.file_id is not None and get_record(request.file_id) is None:
         raise HTTPException(status_code=404, detail="File not found or expired")
 
-    stream_fn = _providers[request.provider]
-
     async def event_stream():
-        async for chunk in stream_fn(request.messages):
+        async for chunk in stream_chat(request.messages, request.provider, request.file_id):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
         yield "data: [DONE]\n\n"
 
