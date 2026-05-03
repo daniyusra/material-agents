@@ -13,9 +13,15 @@ stream_data_chat yields str tokens (from synthesize / plain_chat) and then a sin
 ChartEvent at the very end when a figure was produced.
 """
 
+import ast
 import json
+import os
 import re
+import subprocess
+import sys
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import AsyncIterator, Literal, TypedDict
 
 import pandas as pd
@@ -98,15 +104,19 @@ Error:
 {error}"""
 
 _SYNTHESIS_SYSTEM = """\
-You are a data analyst answering a user's question directly.
-Answer in 1–2 conversational sentences. Lead with the answer, then support it with the key number or finding.
-If the result is an error, apologise briefly and suggest what might have gone wrong.
+You are a data analyst answering a user's question with precision.
+Lead with the direct answer, then cite the exact figure from the code result.
+Add 1–2 sentences of interpretation or context if it adds value (comparisons, what the number implies, caveats).
+Keep the tone conversational, not academic. If the result is an error, apologise briefly and suggest what went wrong.
 Dataset: {filename} — columns: {columns}"""
 
 _SYNTHESIS_VIZ_SYSTEM = """\
 You are a data analyst answering a user's question directly. A {chart_type} was just generated.
-Answer the user's question in 1–2 conversational sentences based on what the data shows.
-Lead with a conclusion ("It seems…", "Yes, because…", "Generally…") — do not describe the chart mechanics.
+Lead with a clear conclusion, then back it up with specific observations — reference actual values, ranges, \
+or trends visible from the dataset info and the chart code (e.g. which columns were plotted, what the sample \
+rows suggest about the distribution, whether a trendline was used).
+Do not describe chart mechanics. Do not say "the chart shows" — instead say what the data shows.
+Keep the tone conversational. 3–5 sentences is fine if the question warrants it.
 Dataset: {filename} — columns: {columns}"""
 
 
@@ -127,48 +137,109 @@ class DataAgentState(TypedDict):
 
 # ── Pure helpers (independently testable) ─────────────────────────────────────
 
+_BLOCKED_ATTRS = frozenset({
+    "system", "popen", "exec", "eval", "compile",
+    "open", "read", "write", "remove", "unlink", "rmdir",
+})
+
+_RUNNER = Path(__file__).parent / "_sandbox_runner.py"
+
+# Env passed to the sandbox subprocess — strips API keys and credentials while
+# keeping what Python needs to locate its stdlib and any virtualenv.
+_SAFE_ENV_KEYS = {"PATH", "PYTHONPATH", "VIRTUAL_ENV", "PYTHONHOME", "LANG", "LC_ALL", "HOME"}
+_SANDBOX_ENV = {k: v for k, v in os.environ.items() if k in _SAFE_ENV_KEYS}
+
+
+def _ast_guard(code: str) -> str | None:
+    """Level 2: Return an error string if the code contains blocked patterns, else None."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return f"SyntaxError: {e}"
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            return "import statements are not allowed in generated code"
+        if isinstance(node, ast.Attribute):
+            if node.attr.startswith("__") or node.attr in _BLOCKED_ATTRS:
+                return f"blocked attribute access: .{node.attr}"
+    return None
+
+
+def _run_sandboxed(mode: str, code: str, df: pd.DataFrame, timeout: int = 15) -> dict:
+    """Level 3: serialise df to a temp CSV, execute code in a subprocess, return parsed result."""
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
+        csv_path = f.name
+    try:
+        df.to_csv(csv_path, index=False)
+        payload = json.dumps({"mode": mode, "code": code, "csv_path": csv_path}).encode()
+        proc = subprocess.run(
+            [sys.executable, str(_RUNNER)],
+            input=payload,
+            capture_output=True,
+            timeout=timeout,
+            env=_SANDBOX_ENV,
+        )
+    except subprocess.TimeoutExpired:
+        return {"error": "ExecutionError: execution timed out (15 s limit)"}
+    finally:
+        Path(csv_path).unlink(missing_ok=True)
+
+    if proc.returncode != 0:
+        stderr = proc.stderr.decode(errors="replace").strip()
+        return {"error": f"ExecutionError: {stderr[:300] or 'subprocess failed'}"}
+
+    stdout = proc.stdout.decode(errors="replace").strip()
+    try:
+        return json.loads(stdout.split("\n")[-1])
+    except (json.JSONDecodeError, IndexError):
+        return {"error": "ExecutionError: unexpected subprocess output"}
+
+
 def df_info(df: pd.DataFrame) -> str:
-    """Return a compact schema + sample string for LLM prompts."""
+    """Return a compact schema + sample string for LLM prompts.
+
+    String values are truncated to 120 chars to limit prompt-injection surface
+    (a cell containing 'Ignore previous instructions…' would otherwise reach the LLM verbatim).
+    """
+    sample = df.head(3).copy()
+    for col in sample.select_dtypes(include=["object", "str"]).columns:
+        sample[col] = sample[col].astype(str).str[:120]
     lines = [
         f"Shape: {df.shape[0]} rows × {df.shape[1]} columns",
         "Columns (name: dtype): "
         + ", ".join(f"{c}: {t}" for c, t in zip(df.columns, df.dtypes)),
         "",
         "Sample (first 3 rows):",
-        df.head(3).to_string(index=False),
+        sample.to_string(index=False),
     ]
     return "\n".join(lines)
 
 
+def df_stats(df: pd.DataFrame) -> str:
+    """Return descriptive statistics for numeric columns — gives synthesis node actual values to cite."""
+    numeric = df.select_dtypes(include="number")
+    if numeric.empty:
+        return "No numeric columns."
+    return numeric.describe().round(4).to_string()
+
+
 def execute_pandas_code(code: str, df: pd.DataFrame) -> str:
-    """Execute pandas code. Returns str(result) or 'ExecutionError: …' on failure."""
-    local_vars: dict = {"df": df, "pd": pd}
-    try:
-        exec(code, local_vars)  # nosec — personal research tool, single user
-        return str(local_vars.get("result", "(no `result` variable was assigned)"))
-    except Exception as exc:
-        return f"ExecutionError: {exc}"
+    """Execute pandas code in a sandboxed subprocess. Returns str(result) or 'ExecutionError: …'."""
+    if err := _ast_guard(code):
+        return f"ExecutionError: {err}"
+    result = _run_sandboxed("pandas", code, df)
+    return result.get("error") or result.get("result", "(no `result` variable was assigned)")
 
 
 def execute_viz_code(code: str, df: pd.DataFrame) -> tuple[str, dict | None]:
-    """
-    Execute Plotly visualisation code with px and go in scope.
-    Returns (status_message, plotly_figure_dict | None).
-    """
-    import plotly.express as px
-    import plotly.graph_objects as go
-
-    local_vars: dict = {"df": df, "pd": pd, "px": px, "go": go}
-    try:
-        exec(code, local_vars)  # nosec
-        result = local_vars.get("result")
-        if result is None:
-            return "(no `result` variable was assigned)", None
-        if not hasattr(result, "to_json"):
-            return f"ExecutionError: `result` must be a Plotly Figure, got {type(result).__name__}", None
-        return "Chart generated successfully.", json.loads(result.to_json())
-    except Exception as exc:
-        return f"ExecutionError: {exc}", None
+    """Execute Plotly viz code in a sandboxed subprocess. Returns (status, figure_dict | None)."""
+    if err := _ast_guard(code):
+        return f"ExecutionError: {err}", None
+    result = _run_sandboxed("viz", code, df)
+    if "error" in result:
+        err_msg = result["error"]
+        return err_msg, None
+    return "Chart generated successfully.", result.get("figure")
 
 
 def _strip_fences(text: str) -> str:
@@ -257,10 +328,13 @@ async def _synthesize_node(state: DataAgentState) -> dict:
             filename=filename,
             columns=columns,
         )
-        data_context = df_info(get_dataframe(state["file_id"])) if get_dataframe(state["file_id"]) is not None else ""
+        df = get_dataframe(state["file_id"])
+        data_context = df_info(df) if df is not None else ""
+        stats_context = df_stats(df) if df is not None else ""
         user_msg = (
             f"Question: {state['question']}\n\n"
             f"Dataset info:\n{data_context}\n\n"
+            f"Descriptive statistics:\n{stats_context}\n\n"
             f"Chart code executed:\n{state.get('generated_code') or ''}"
         )
     else:
