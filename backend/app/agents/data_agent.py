@@ -1,19 +1,21 @@
 """
-Data Q&A agent implemented as a LangGraph StateGraph.
+Data Q&A + Visualization agent implemented as a LangGraph StateGraph.
 
 Graph topology:
-  START
-    └─ generate_code
-          ├─ (NOT_DATA_QUESTION) ─→ plain_chat ─→ END
-          └─ (data question)    ─→ execute_code
-                                        ├─ (error, retry < 1) ─→ fix_code ─→ execute_code
-                                        └─ (success / retries exhausted) ─→ synthesize ─→ END
+  START → classify → route_by_intent
+      NOT_DATA               → plain_chat  → END
+      DATA_ONLY / DATA_VIZ   → generate_code → execute_code → route_after_execute
+                                                   → fix_code → execute_code  (retry once)
+                                                   → synthesize → END
 
-Streaming: astream_events filters on_chat_model_stream from STREAMING_NODES so
-           only the final human-facing response is yielded token-by-token.
+For DATA_VIZ, generate_code emits Plotly code; execute_code sets plotly_json in state.
+stream_data_chat yields str tokens (from synthesize / plain_chat) and then a single
+ChartEvent at the very end when a figure was produced.
 """
 
+import json
 import re
+from dataclasses import dataclass
 from typing import AsyncIterator, Literal, TypedDict
 
 import pandas as pd
@@ -24,25 +26,69 @@ from langgraph.graph.state import CompiledStateGraph
 from ..storage import get_dataframe, get_record
 from .chat import _to_lc_messages, get_model
 
+# ── Chart event ───────────────────────────────────────────────────────────────
+
+@dataclass
+class ChartEvent:
+    """Yielded by stream_data_chat when a Plotly figure was produced."""
+    figure: dict
+
+
 # ── Prompts ───────────────────────────────────────────────────────────────────
 
-_CODE_SYSTEM = """\
+_CLASSIFY_SYSTEM = """\
+You are a data analyst assistant. The user has uploaded a dataset.
+Dataset columns: {columns}
+
+Classify the user's question into one of three intents and respond with ONLY valid JSON.
+
+Intents:
+- NOT_DATA: Not about the dataset (greetings, general knowledge, etc.)
+- DATA_ONLY: Requires data analysis but NO chart (statistics, specific values)
+- DATA_VIZ: Requires a chart visualization
+
+If DATA_VIZ, also choose the most appropriate chart type:
+- histogram    — distribution of a single variable ("Show me the distribution of X")
+- boxplot      — compare distributions across groups ("Compare A vs B vs C")
+- scatter      — relationship / correlation between two variables ("Is X correlated with Y?")
+- heatmap      — correlation matrix across all numeric variables ("Which variables matter most?")
+- line         — trend over a sequence or time axis ("How does X change across experiments?")
+- scatter_matrix — overview of all pairwise variable relationships ("Show me everything at once")
+
+Respond with ONLY valid JSON, no explanation:
+{{"intent": "NOT_DATA"|"DATA_ONLY"|"DATA_VIZ", "chart_type": null|"histogram"|"boxplot"|"scatter"|"heatmap"|"line"|"scatter_matrix"}}"""
+
+_DATA_CODE_SYSTEM = """\
 You have access to a pandas DataFrame called `df`.
 
 {df_info}
 
-If the user's question is about analysing or querying this data, write Python code to answer it.
+Write Python/pandas code to answer the user's question.
 Rules:
-- `df` and `pd` are already in scope — do not import anything.
+- `df` and `pd` are in scope — do not import anything.
 - Store the final answer in a variable named `result`.
-- Output ONLY the raw Python code. No markdown fences, no explanation.
+- Output ONLY raw Python code. No markdown fences, no explanation."""
 
-If the question is NOT about the data (e.g. greetings, general knowledge), respond with exactly:
-NOT_DATA_QUESTION"""
+_VIZ_CODE_SYSTEM = """\
+You have access to a pandas DataFrame called `df`.
 
-_FIX_SYSTEM = """\
-The following Python/pandas code raised an error when executed against a DataFrame.
-Rewrite it so it works correctly.
+{df_info}
+
+Create a {chart_type} chart to answer the user's question.
+In scope: `df`, `pd`, `px` (plotly.express), `go` (plotly.graph_objects).
+Assign the final Plotly Figure to a variable named `result`.
+Output ONLY raw Python code. No markdown fences, no explanation.
+
+Chart type guidelines:
+- histogram:      result = px.histogram(df, x="col")
+- boxplot:        result = px.box(df, x="group_col", y="value_col")
+- scatter:        result = px.scatter(df, x="col1", y="col2", trendline="ols")
+- heatmap:        result = px.imshow(df.select_dtypes("number").corr(), text_auto=True, color_continuous_scale="RdBu_r", zmin=-1, zmax=1)
+- line:           result = px.line(df, x="x_col", y="y_col")
+- scatter_matrix: result = px.scatter_matrix(df.select_dtypes("number"))"""
+
+_FIX_CODE_SYSTEM = """\
+The following Python code raised an error when executed. Rewrite it so it works correctly.
 Output ONLY the corrected Python code. No markdown fences, no explanation.
 
 Original code:
@@ -52,10 +98,15 @@ Error:
 {error}"""
 
 _SYNTHESIS_SYSTEM = """\
-You are a helpful data analyst. The user asked a question about their dataset.
-Pandas code was run and produced a result. Explain the result clearly and concisely.
+You are a helpful data analyst. Explain the result clearly and concisely.
 If the result looks like an error, apologise briefly and suggest what might have gone wrong.
-Dataset columns: {columns}"""
+Dataset: {filename} — columns: {columns}"""
+
+_SYNTHESIS_VIZ_SYSTEM = """\
+You are a helpful data analyst. A {chart_type} chart was just generated for the user.
+Briefly describe what the visualisation shows and highlight any key patterns (2–3 sentences).
+Dataset: {filename} — columns: {columns}"""
+
 
 # ── State ─────────────────────────────────────────────────────────────────────
 
@@ -64,15 +115,18 @@ class DataAgentState(TypedDict):
     provider: str
     file_id: str
     question: str
+    intent: str | None          # NOT_DATA | DATA_ONLY | DATA_VIZ
+    chart_type: str | None      # histogram | boxplot | scatter | heatmap | line | scatter_matrix
     generated_code: str | None
     execution_result: str | None
+    plotly_json: dict | None
     retry_count: int
-    is_data_question: bool
+
 
 # ── Pure helpers (independently testable) ─────────────────────────────────────
 
 def df_info(df: pd.DataFrame) -> str:
-    """Return a compact schema + sample string for use in LLM prompts."""
+    """Return a compact schema + sample string for LLM prompts."""
     lines = [
         f"Shape: {df.shape[0]} rows × {df.shape[1]} columns",
         "Columns (name: dtype): "
@@ -85,56 +139,104 @@ def df_info(df: pd.DataFrame) -> str:
 
 
 def execute_pandas_code(code: str, df: pd.DataFrame) -> str:
-    """
-    Execute LLM-generated pandas code with *df* and *pd* in scope.
-    Returns str(result) on success, or 'ExecutionError: …' on failure.
-    """
+    """Execute pandas code. Returns str(result) or 'ExecutionError: …' on failure."""
     local_vars: dict = {"df": df, "pd": pd}
     try:
         exec(code, local_vars)  # nosec — personal research tool, single user
-        result = local_vars.get("result", "(no `result` variable was assigned)")
-        return str(result)
+        return str(local_vars.get("result", "(no `result` variable was assigned)"))
     except Exception as exc:
         return f"ExecutionError: {exc}"
 
 
+def execute_viz_code(code: str, df: pd.DataFrame) -> tuple[str, dict | None]:
+    """
+    Execute Plotly visualisation code with px and go in scope.
+    Returns (status_message, plotly_figure_dict | None).
+    """
+    import plotly.express as px
+    import plotly.graph_objects as go
+
+    local_vars: dict = {"df": df, "pd": pd, "px": px, "go": go}
+    try:
+        exec(code, local_vars)  # nosec
+        result = local_vars.get("result")
+        if result is None:
+            return "(no `result` variable was assigned)", None
+        if not hasattr(result, "to_json"):
+            return f"ExecutionError: `result` must be a Plotly Figure, got {type(result).__name__}", None
+        return "Chart generated successfully.", json.loads(result.to_json())
+    except Exception as exc:
+        return f"ExecutionError: {exc}", None
+
+
 def _strip_fences(text: str) -> str:
-    """Remove optional ```python … ``` fences the model may add despite instructions."""
-    text = re.sub(r"^```(?:python)?\s*\n?", "", text.strip(), flags=re.IGNORECASE)
+    """Remove optional ``` fences the model may add despite instructions."""
+    text = re.sub(r"^```(?:python|json)?\s*\n?", "", text.strip(), flags=re.IGNORECASE)
     return re.sub(r"\n?```\s*$", "", text)
+
+
+def _parse_classification(text: str) -> tuple[str, str | None]:
+    """Parse classify node JSON response. Falls back to DATA_ONLY on any error."""
+    try:
+        data = json.loads(_strip_fences(text))
+        intent = data.get("intent", "DATA_ONLY")
+        if intent not in {"NOT_DATA", "DATA_ONLY", "DATA_VIZ"}:
+            intent = "DATA_ONLY"
+        return intent, data.get("chart_type")
+    except Exception:
+        return "DATA_ONLY", None
+
 
 # ── Graph nodes ───────────────────────────────────────────────────────────────
 
-async def _generate_code_node(state: DataAgentState) -> dict:
+async def _classify_node(state: DataAgentState) -> dict:
+    record = get_record(state["file_id"])
     model = get_model(state["provider"])
-    data = get_dataframe(state["file_id"])
+    columns = ", ".join(record.columns) if record else "unknown"
     prompt = [
-        SystemMessage(content=_CODE_SYSTEM.format(df_info=df_info(data))),
+        SystemMessage(content=_CLASSIFY_SYSTEM.format(columns=columns)),
         HumanMessage(content=state["question"]),
     ]
     response = await model.ainvoke(prompt)
-    raw = _strip_fences(str(response.content))
-    return {
-        "generated_code": raw,
-        "is_data_question": not raw.strip().startswith("NOT_DATA_QUESTION"),
-    }
+    intent, chart_type = _parse_classification(str(response.content))
+    return {"intent": intent, "chart_type": chart_type}
+
+
+async def _generate_code_node(state: DataAgentState) -> dict:
+    df = get_dataframe(state["file_id"])
+    model = get_model(state["provider"])
+    system = (
+        _VIZ_CODE_SYSTEM.format(
+            df_info=df_info(df),
+            chart_type=state.get("chart_type") or "chart",
+        )
+        if state["intent"] == "DATA_VIZ"
+        else _DATA_CODE_SYSTEM.format(df_info=df_info(df))
+    )
+    response = await model.ainvoke([
+        SystemMessage(content=system),
+        HumanMessage(content=state["question"]),
+    ])
+    return {"generated_code": _strip_fences(str(response.content))}
 
 
 async def _execute_code_node(state: DataAgentState) -> dict:
     df = get_dataframe(state["file_id"])
-    result = execute_pandas_code(state["generated_code"] or "", df)
-    return {"execution_result": result}
+    code = state["generated_code"] or ""
+    if state["intent"] == "DATA_VIZ":
+        status, figure = execute_viz_code(code, df)
+        return {"execution_result": status, "plotly_json": figure}
+    return {"execution_result": execute_pandas_code(code, df), "plotly_json": None}
 
 
 async def _fix_code_node(state: DataAgentState) -> dict:
     model = get_model(state["provider"])
-    prompt = [
-        SystemMessage(content=_FIX_SYSTEM.format(
+    response = await model.ainvoke([
+        SystemMessage(content=_FIX_CODE_SYSTEM.format(
             code=state["generated_code"],
             error=state["execution_result"],
         )),
-    ]
-    response = await model.ainvoke(prompt)
+    ])
     return {
         "generated_code": _strip_fences(str(response.content)),
         "retry_count": state["retry_count"] + 1,
@@ -144,13 +246,21 @@ async def _fix_code_node(state: DataAgentState) -> dict:
 async def _synthesize_node(state: DataAgentState) -> dict:
     record = get_record(state["file_id"])
     model = get_model(state["provider"])
-    prompt = [
-        SystemMessage(content=_SYNTHESIS_SYSTEM.format(
-            columns=", ".join(record.columns) if record else ""
-        )),
-        HumanMessage(content=f"Question: {state['question']}\n\nCode result:\n{state['execution_result']}"),
-    ]
-    await model.ainvoke(prompt)
+    columns = ", ".join(record.columns) if record else "unknown"
+    filename = record.filename if record else "dataset"
+
+    if state["intent"] == "DATA_VIZ":
+        system = _SYNTHESIS_VIZ_SYSTEM.format(
+            chart_type=state.get("chart_type") or "chart",
+            filename=filename,
+            columns=columns,
+        )
+        user_msg = f"Question: {state['question']}\nChart status: {state['execution_result']}"
+    else:
+        system = _SYNTHESIS_SYSTEM.format(filename=filename, columns=columns)
+        user_msg = f"Question: {state['question']}\n\nCode result:\n{state['execution_result']}"
+
+    await model.ainvoke([SystemMessage(content=system), HumanMessage(content=user_msg)])
     return {}
 
 
@@ -159,10 +269,11 @@ async def _plain_chat_node(state: DataAgentState) -> dict:
     await model.ainvoke(_to_lc_messages(state["messages"]))
     return {}
 
+
 # ── Routing ───────────────────────────────────────────────────────────────────
 
-def route_after_code(state: DataAgentState) -> str:
-    return "execute_code" if state["is_data_question"] else "plain_chat"
+def route_by_intent(state: DataAgentState) -> str:
+    return "plain_chat" if state["intent"] == "NOT_DATA" else "generate_code"
 
 
 def route_after_execute(state: DataAgentState) -> str:
@@ -171,7 +282,8 @@ def route_after_execute(state: DataAgentState) -> str:
         return "fix_code"
     return "synthesize"
 
-# ── Graph compilation (lazy singleton) ───────────────────────────────────────
+
+# ── Graph compilation (lazy singleton) ────────────────────────────────────────
 
 _graph: CompiledStateGraph | None = None
 
@@ -179,14 +291,16 @@ _graph: CompiledStateGraph | None = None
 def _build_graph() -> CompiledStateGraph:
     g = StateGraph(DataAgentState)
 
+    g.add_node("classify", _classify_node)
     g.add_node("generate_code", _generate_code_node)
     g.add_node("execute_code", _execute_code_node)
     g.add_node("fix_code", _fix_code_node)
     g.add_node("synthesize", _synthesize_node)
     g.add_node("plain_chat", _plain_chat_node)
 
-    g.add_edge(START, "generate_code")
-    g.add_conditional_edges("generate_code", route_after_code)
+    g.add_edge(START, "classify")
+    g.add_conditional_edges("classify", route_by_intent)
+    g.add_edge("generate_code", "execute_code")
     g.add_conditional_edges("execute_code", route_after_execute)
     g.add_edge("fix_code", "execute_code")
     g.add_edge("synthesize", END)
@@ -201,6 +315,7 @@ def _get_graph() -> CompiledStateGraph:
         _graph = _build_graph()
     return _graph
 
+
 # ── Public entry point ────────────────────────────────────────────────────────
 
 _STREAMING_NODES = {"synthesize", "plain_chat"}
@@ -210,7 +325,7 @@ async def stream_data_chat(
     messages: list[dict],
     provider: Literal["anthropic", "openai"],
     file_id: str,
-) -> AsyncIterator[str]:
+) -> AsyncIterator[str | ChartEvent]:
     if get_record(file_id) is None:
         yield "The uploaded file could not be found or has expired. Please re-upload."
         return
@@ -223,17 +338,31 @@ async def stream_data_chat(
         "provider": provider,
         "file_id": file_id,
         "question": messages[-1].get("content", ""),
+        "intent": None,
+        "chart_type": None,
         "generated_code": None,
         "execution_result": None,
+        "plotly_json": None,
         "retry_count": 0,
-        "is_data_question": False,
     }
 
+    plotly_json: dict | None = None
+
     async for event in _get_graph().astream_events(initial_state, version="v2"):
-        if (
-            event["event"] == "on_chat_model_stream"
-            and event.get("metadata", {}).get("langgraph_node") in _STREAMING_NODES
-        ):
+        node = event.get("metadata", {}).get("langgraph_node")
+
+        # Yield text tokens from human-facing nodes
+        if event["event"] == "on_chat_model_stream" and node in _STREAMING_NODES:
             chunk = event["data"]["chunk"]
             if chunk.content:
                 yield chunk.content
+
+        # Capture chart JSON from the last execute_code completion
+        if event["event"] == "on_chain_end" and node == "execute_code":
+            output = event["data"].get("output", {})
+            if isinstance(output, dict) and output.get("plotly_json"):
+                plotly_json = output["plotly_json"]
+
+    # Emit the chart after all text is streamed
+    if plotly_json is not None:
+        yield ChartEvent(figure=plotly_json)

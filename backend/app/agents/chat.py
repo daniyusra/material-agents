@@ -41,11 +41,11 @@ async def stream_chat(
     messages: list[dict],
     provider: Literal["anthropic", "openai"] = "anthropic",
     file_id: str | None = None,
-) -> AsyncIterator[str]:
+) -> AsyncIterator:
     if file_id is not None:
         from .data_agent import stream_data_chat
-        async for chunk in stream_data_chat(messages, provider, file_id):
-            yield chunk
+        async for item in stream_data_chat(messages, provider, file_id):
+            yield item
         return
 
     model = get_model(provider)

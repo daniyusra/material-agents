@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .agents.chat import stream_chat
+from .agents.data_agent import ChartEvent
 from .storage import cleanup_loop, get_record, rebuild_registry, store_file
 
 
@@ -65,8 +66,11 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=404, detail="File not found or expired")
 
     async def event_stream():
-        async for chunk in stream_chat(request.messages, request.provider, request.file_id):
-            yield f"data: {json.dumps({'content': chunk})}\n\n"
+        async for item in stream_chat(request.messages, request.provider, request.file_id):
+            if isinstance(item, ChartEvent):
+                yield f"data: {json.dumps({'type': 'chart', 'content': item.figure})}\n\n"
+            else:
+                yield f"data: {json.dumps({'type': 'text', 'content': item})}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
