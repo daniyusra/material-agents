@@ -98,13 +98,15 @@ Error:
 {error}"""
 
 _SYNTHESIS_SYSTEM = """\
-You are a helpful data analyst. Explain the result clearly and concisely.
-If the result looks like an error, apologise briefly and suggest what might have gone wrong.
+You are a data analyst answering a user's question directly.
+Answer in 1–2 conversational sentences. Lead with the answer, then support it with the key number or finding.
+If the result is an error, apologise briefly and suggest what might have gone wrong.
 Dataset: {filename} — columns: {columns}"""
 
 _SYNTHESIS_VIZ_SYSTEM = """\
-You are a helpful data analyst. A {chart_type} chart was just generated for the user.
-Briefly describe what the visualisation shows and highlight any key patterns (2–3 sentences).
+You are a data analyst answering a user's question directly. A {chart_type} was just generated.
+Answer the user's question in 1–2 conversational sentences based on what the data shows.
+Lead with a conclusion ("It seems…", "Yes, because…", "Generally…") — do not describe the chart mechanics.
 Dataset: {filename} — columns: {columns}"""
 
 
@@ -255,7 +257,12 @@ async def _synthesize_node(state: DataAgentState) -> dict:
             filename=filename,
             columns=columns,
         )
-        user_msg = f"Question: {state['question']}\nChart status: {state['execution_result']}"
+        data_context = df_info(get_dataframe(state["file_id"])) if get_dataframe(state["file_id"]) is not None else ""
+        user_msg = (
+            f"Question: {state['question']}\n\n"
+            f"Dataset info:\n{data_context}\n\n"
+            f"Chart code executed:\n{state.get('generated_code') or ''}"
+        )
     else:
         system = _SYNTHESIS_SYSTEM.format(filename=filename, columns=columns)
         user_msg = f"Question: {state['question']}\n\nCode result:\n{state['execution_result']}"
