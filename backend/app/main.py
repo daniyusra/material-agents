@@ -13,11 +13,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .agents.chat import stream_chat
-from .storage import cleanup_loop, get_record, store_file
+from .storage import cleanup_loop, get_record, rebuild_registry, store_file
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    rebuild_registry()
     task = asyncio.create_task(cleanup_loop())
     yield
     task.cancel()
