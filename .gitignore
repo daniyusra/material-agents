@@ -208,3 +208,7 @@ __marimo__/
 
 #frontend
 frontend/node_modules
+
+# backend uploads (TTL-managed, not committed)
+backend/uploads/*
+!backend/uploads/.gitkeep

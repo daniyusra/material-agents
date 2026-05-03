@@ -2,18 +2,29 @@ from dotenv import load_dotenv
 
 load_dotenv()  # must run before agent imports so API keys are in env at model init time
 
+import asyncio
 import json
-from typing import Literal
+from contextlib import asynccontextmanager
+from typing import Literal, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .agents.chat import stream_chat as stream_anthropic
 from .agents.chat_openai import stream_chat as stream_openai
+from .storage import cleanup_loop, get_record, store_file
 
-app = FastAPI(title="Material Agents API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(cleanup_loop())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="Material Agents API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,13 +39,36 @@ _providers = {
 }
 
 
+# ── Upload ───────────────────────────────────────────────────────────────────
+
+@app.post("/api/upload")
+async def upload(file: UploadFile):
+    data = await file.read()
+    try:
+        record = store_file(data, file.filename or "upload")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {
+        "file_id": record.file_id,
+        "filename": record.filename,
+        "rows": record.rows,
+        "columns": record.columns,
+    }
+
+
+# ── Chat ─────────────────────────────────────────────────────────────────────
+
 class ChatRequest(BaseModel):
     messages: list[dict]
     provider: Literal["anthropic", "openai"] = "anthropic"
+    file_id: Optional[str] = None
 
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
+    if request.file_id is not None and get_record(request.file_id) is None:
+        raise HTTPException(status_code=404, detail="File not found or expired")
+
     stream_fn = _providers[request.provider]
 
     async def event_stream():
