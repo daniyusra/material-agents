@@ -26,3 +26,8 @@ export const PROVIDERS: { value: Provider; label: string }[] = [
 ];
 
 export const ACCEPTED = ".csv,.tsv,.xlsx,.xls";
+
+export interface ApiKeys {
+  anthropic?: string;
+  openai?: string;
+}

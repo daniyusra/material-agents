@@ -15,6 +15,7 @@ export interface ChatPayload {
   messages: Message[];
   provider: Provider;
   file_id: string | null;
+  api_key?: string;
 }
 
 export async function streamChat(

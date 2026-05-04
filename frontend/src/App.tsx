@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadFile, streamChat } from "./api";
+import { getCookie } from "./cookies";
 import UploadScreen from "./components/UploadScreen";
 import ChatScreen from "./components/ChatScreen";
-import type { FileInfo, Message, Provider } from "./types";
+import OptionsModal from "./components/OptionsModal";
+import type { ApiKeys, FileInfo, Message, Provider } from "./types";
 
 export default function App() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
@@ -13,6 +15,11 @@ export default function App() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [provider, setProvider] = useState<Provider>("anthropic");
+  const [apiKeys, setApiKeys] = useState<ApiKeys>(() => ({
+    anthropic: getCookie("apikey_anthropic"),
+    openai: getCookie("apikey_openai"),
+  }));
+  const [showOptions, setShowOptions] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +49,12 @@ export default function App() {
 
     try {
       await streamChat(
-        { messages: history, provider, file_id: fileInfo?.file_id ?? null },
+        {
+          messages: history,
+          provider,
+          file_id: fileInfo?.file_id ?? null,
+          api_key: apiKeys[provider],
+        },
         (token) => {
           setMessages((prev) => {
             const updated = [...prev];
@@ -73,28 +85,40 @@ export default function App() {
     }
   };
 
-  if (!fileInfo) {
-    return (
-      <UploadScreen
-        uploading={uploading}
-        uploadError={uploadError}
-        onFile={handleFile}
-      />
-    );
-  }
-
   return (
-    <ChatScreen
-      fileInfo={fileInfo}
-      messages={messages}
-      input={input}
-      streaming={streaming}
-      provider={provider}
-      bottomRef={bottomRef}
-      onProviderChange={setProvider}
-      onChangeFile={() => { setFileInfo(null); setMessages([]); }}
-      onInputChange={setInput}
-      onSend={send}
-    />
+    <>
+      {showOptions && (
+        <OptionsModal
+          provider={provider}
+          apiKeys={apiKeys}
+          onSave={(newProvider, newKeys) => {
+            setProvider(newProvider);
+            setApiKeys(newKeys);
+            setShowOptions(false);
+          }}
+          onClose={() => setShowOptions(false)}
+        />
+      )}
+      {!fileInfo ? (
+        <UploadScreen
+          uploading={uploading}
+          uploadError={uploadError}
+          onFile={handleFile}
+        />
+      ) : (
+        <ChatScreen
+          fileInfo={fileInfo}
+          messages={messages}
+          input={input}
+          streaming={streaming}
+          provider={provider}
+          bottomRef={bottomRef}
+          onOpenOptions={() => setShowOptions(true)}
+          onChangeFile={() => { setFileInfo(null); setMessages([]); }}
+          onInputChange={setInput}
+          onSend={send}
+        />
+      )}
+    </>
   );
 }

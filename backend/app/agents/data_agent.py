@@ -126,6 +126,7 @@ class DataAgentState(TypedDict):
     messages: list[dict]
     provider: str
     file_id: str
+    api_key: str | None         # user-supplied key; falls back to env-var singleton when None
     question: str
     intent: str | None          # NOT_DATA | DATA_ONLY | DATA_VIZ
     chart_type: str | None      # histogram | boxplot | scatter | heatmap | line | scatter_matrix
@@ -264,7 +265,7 @@ def _parse_classification(text: str) -> tuple[str, str | None]:
 
 async def _classify_node(state: DataAgentState) -> dict:
     record = get_record(state["file_id"])
-    model = get_model(state["provider"])
+    model = get_model(state["provider"], state.get("api_key"))
     columns = ", ".join(record.columns) if record else "unknown"
     prompt = [
         SystemMessage(content=_CLASSIFY_SYSTEM.format(columns=columns)),
@@ -277,7 +278,7 @@ async def _classify_node(state: DataAgentState) -> dict:
 
 async def _generate_code_node(state: DataAgentState) -> dict:
     df = get_dataframe(state["file_id"])
-    model = get_model(state["provider"])
+    model = get_model(state["provider"], state.get("api_key"))
     system = (
         _VIZ_CODE_SYSTEM.format(
             df_info=df_info(df),
@@ -303,7 +304,7 @@ async def _execute_code_node(state: DataAgentState) -> dict:
 
 
 async def _fix_code_node(state: DataAgentState) -> dict:
-    model = get_model(state["provider"])
+    model = get_model(state["provider"], state.get("api_key"))
     response = await model.ainvoke([
         SystemMessage(content=_FIX_CODE_SYSTEM.format(
             code=state["generated_code"],
@@ -318,7 +319,7 @@ async def _fix_code_node(state: DataAgentState) -> dict:
 
 async def _synthesize_node(state: DataAgentState) -> dict:
     record = get_record(state["file_id"])
-    model = get_model(state["provider"])
+    model = get_model(state["provider"], state.get("api_key"))
     columns = ", ".join(record.columns) if record else "unknown"
     filename = record.filename if record else "dataset"
 
@@ -346,7 +347,7 @@ async def _synthesize_node(state: DataAgentState) -> dict:
 
 
 async def _plain_chat_node(state: DataAgentState) -> dict:
-    model = get_model(state["provider"])
+    model = get_model(state["provider"], state.get("api_key"))
     await model.ainvoke(_to_lc_messages(state["messages"]))
     return {}
 
@@ -406,6 +407,7 @@ async def stream_data_chat(
     messages: list[dict],
     provider: Literal["anthropic", "openai"],
     file_id: str,
+    api_key: str | None = None,
 ) -> AsyncIterator[str | ChartEvent]:
     if get_record(file_id) is None:
         yield "The uploaded file could not be found or has expired. Please re-upload."
@@ -418,6 +420,7 @@ async def stream_data_chat(
         "messages": messages,
         "provider": provider,
         "file_id": file_id,
+        "api_key": api_key,
         "question": messages[-1].get("content", ""),
         "intent": None,
         "chart_type": None,

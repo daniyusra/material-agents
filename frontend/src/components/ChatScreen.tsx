@@ -11,7 +11,7 @@ interface ChatScreenProps {
   streaming: boolean;
   provider: Provider;
   bottomRef: RefObject<HTMLDivElement>;
-  onProviderChange: (p: Provider) => void;
+  onOpenOptions: () => void;
   onChangeFile: () => void;
   onInputChange: (value: string) => void;
   onSend: () => void;
@@ -24,7 +24,7 @@ export default function ChatScreen({
   streaming,
   provider,
   bottomRef,
-  onProviderChange,
+  onOpenOptions,
   onChangeFile,
   onInputChange,
   onSend,
@@ -35,7 +35,7 @@ export default function ChatScreen({
         fileInfo={fileInfo}
         provider={provider}
         streaming={streaming}
-        onProviderChange={onProviderChange}
+        onOpenOptions={onOpenOptions}
         onChangeFile={onChangeFile}
       />
       <MessageList

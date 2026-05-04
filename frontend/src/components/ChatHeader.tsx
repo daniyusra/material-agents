@@ -1,11 +1,15 @@
-import { PROVIDERS } from "../types";
 import type { FileInfo, Provider } from "../types";
+
+const PROVIDER_LABEL: Record<Provider, string> = {
+  anthropic: "Claude",
+  openai: "GPT-4o",
+};
 
 interface ChatHeaderProps {
   fileInfo: FileInfo;
   provider: Provider;
   streaming: boolean;
-  onProviderChange: (p: Provider) => void;
+  onOpenOptions: () => void;
   onChangeFile: () => void;
 }
 
@@ -13,7 +17,7 @@ export default function ChatHeader({
   fileInfo,
   provider,
   streaming,
-  onProviderChange,
+  onOpenOptions,
   onChangeFile,
 }: ChatHeaderProps) {
   return (
@@ -28,18 +32,15 @@ export default function ChatHeader({
         </span>
       </div>
       <div style={styles.right}>
-        <select
-          value={provider}
-          onChange={(e) => onProviderChange(e.target.value as Provider)}
+        <span style={styles.providerLabel}>{PROVIDER_LABEL[provider]}</span>
+        <button
+          onClick={onOpenOptions}
           disabled={streaming}
-          style={styles.select}
+          style={styles.optionsBtn}
+          title="Options"
         >
-          {PROVIDERS.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
-            </option>
-          ))}
-        </select>
+          ⚙ Options
+        </button>
         <button
           onClick={onChangeFile}
           disabled={streaming}
@@ -88,7 +89,14 @@ const styles = {
     textOverflow: "ellipsis" as const,
     whiteSpace: "nowrap" as const,
   },
-  select: {
+  providerLabel: {
+    fontSize: "0.8rem",
+    color: "#666",
+    padding: "0.2rem 0.5rem",
+    background: "#f5f5f5",
+    borderRadius: 6,
+  },
+  optionsBtn: {
     padding: "0.4rem 0.75rem",
     borderRadius: 8,
     border: "1px solid #ccc",
@@ -96,6 +104,7 @@ const styles = {
     fontFamily: "inherit",
     background: "white",
     cursor: "pointer",
+    color: "#333",
   },
   changeFileBtn: {
     padding: "0.4rem 0.75rem",

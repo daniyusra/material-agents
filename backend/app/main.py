@@ -58,6 +58,7 @@ class ChatRequest(BaseModel):
     messages: list[dict]
     provider: Literal["anthropic", "openai"] = "anthropic"
     file_id: Optional[str] = None
+    api_key: Optional[str] = None  # user-supplied key; falls back to env-var key when absent
 
 
 @app.post("/api/chat")
@@ -66,7 +67,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=404, detail="File not found or expired")
 
     async def event_stream():
-        async for item in stream_chat(request.messages, request.provider, request.file_id):
+        async for item in stream_chat(request.messages, request.provider, request.file_id, request.api_key):
             if isinstance(item, ChartEvent):
                 yield f"data: {json.dumps({'type': 'chart', 'content': item.figure})}\n\n"
             else:
