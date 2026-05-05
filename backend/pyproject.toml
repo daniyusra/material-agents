@@ -16,6 +16,9 @@ dependencies = [
     "langgraph>=1.0.0",
     "plotly>=5.0.0",
     "statsmodels>=0.14.0",
+    "slowapi>=0.1.9",
+    "python-json-logger>=2.0.0",
+    "sentry-sdk[fastapi]>=2.0.0",
 ]
 
 [project.optional-dependencies]

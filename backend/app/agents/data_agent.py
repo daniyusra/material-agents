@@ -15,6 +15,7 @@ ChartEvent at the very end when a figure was produced.
 
 import ast
 import json
+import logging
 import os
 import re
 import subprocess
@@ -23,6 +24,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import AsyncIterator, Literal, TypedDict
+
+log = logging.getLogger(__name__)
 
 import pandas as pd
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -282,6 +285,7 @@ async def _classify_node(state: DataAgentState) -> dict:
     ]
     response = await model.ainvoke(prompt)
     intent, chart_type = _parse_classification(str(response.content))
+    log.info("classified", extra={"intent": intent, "chart_type": chart_type, "file_id": state["file_id"]})
     return {"intent": intent, "chart_type": chart_type}
 
 
@@ -308,8 +312,13 @@ async def _execute_code_node(state: DataAgentState) -> dict:
     code = state["generated_code"] or ""
     if state["intent"] == "DATA_VIZ":
         status, figure = execute_viz_code(code, df)
+        if status.startswith("ExecutionError:"):
+            log.warning("code_execution_failed", extra={"intent": "DATA_VIZ", "error": status})
         return {"execution_result": status, "plotly_json": figure}
-    return {"execution_result": execute_pandas_code(code, df), "plotly_json": None}
+    result = execute_pandas_code(code, df)
+    if result.startswith("ExecutionError:"):
+        log.warning("code_execution_failed", extra={"intent": "DATA_ONLY", "error": result})
+    return {"execution_result": result, "plotly_json": None}
 
 
 async def _fix_code_node(state: DataAgentState) -> dict:

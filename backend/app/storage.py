@@ -10,6 +10,8 @@ called by cleanup_loop() every CLEANUP_INTERVAL_SECONDS.
 """
 
 import asyncio
+import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass
@@ -18,9 +20,12 @@ from typing import Optional
 
 import pandas as pd
 
-UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
-TTL_SECONDS = 2 * 60 * 60        # 2 hours
-CLEANUP_INTERVAL_SECONDS = 3600  # run every hour
+log = logging.getLogger(__name__)
+
+_default_upload_dir = str(Path(__file__).parent.parent / "uploads")
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", _default_upload_dir))
+TTL_SECONDS = int(os.getenv("FILE_TTL_SECONDS", str(2 * 60 * 60)))       # default 2 hours
+CLEANUP_INTERVAL_SECONDS = int(os.getenv("CLEANUP_INTERVAL_SECONDS", "3600"))
 
 SUPPORTED_EXTENSIONS = {".csv", ".tsv", ".xlsx", ".xls"}
 
@@ -87,6 +92,8 @@ def purge_expired() -> int:
     for fid in to_delete:
         rec = _registry.pop(fid)
         rec.path.unlink(missing_ok=True)
+    if to_delete:
+        log.info("files_purged", extra={"count": len(to_delete)})
     return len(to_delete)
 
 
@@ -122,8 +129,9 @@ def rebuild_registry() -> int:
 
         try:
             df = _load(path, path.suffix.lower())
-        except Exception:
-            continue  # corrupt or unreadable — skip silently
+        except Exception as exc:
+            log.warning("registry_skip_corrupt_file", extra={"path": str(path), "error": str(exc)})
+            continue
 
         _registry[file_id] = _FileRecord(
             file_id=file_id,
@@ -135,6 +143,7 @@ def rebuild_registry() -> int:
         )
         restored += 1
 
+    log.info("registry_rebuilt", extra={"restored": restored})
     return restored
 
 
