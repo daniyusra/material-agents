@@ -5,6 +5,7 @@ from app.agents.data_agent import (
     _parse_classification,
     _strip_fences,
     df_info,
+    df_stats,
     execute_pandas_code,
     execute_viz_code,
     route_after_execute,
@@ -157,11 +158,36 @@ class TestParseClassification:
         assert chart == "scatter"
 
 
+class TestDfStats:
+    def test_returns_describe_output_for_numeric(self):
+        df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+        result = df_stats(df)
+        assert "mean" in result
+        assert "std" in result
+        assert "a" in result
+        assert "b" in result
+
+    def test_no_numeric_columns(self):
+        df = pd.DataFrame({"name": ["alice", "bob"], "city": ["x", "y"]})
+        assert df_stats(df) == "No numeric columns."
+
+    def test_values_are_rounded(self):
+        df = pd.DataFrame({"x": [1, 2, 3]})
+        result = df_stats(df)
+        # mean of [1,2,3] is 2.0 — should appear in output
+        assert "2.0" in result
+
+    def test_empty_dataframe_numeric(self):
+        # A DataFrame with 0 rows but a numeric column is considered empty by pandas
+        df = pd.DataFrame({"a": pd.Series([], dtype=float)})
+        assert df_stats(df) == "No numeric columns."
+
+
 class TestRouting:
     def _state(self, **overrides):
         base = {
             "messages": [], "provider": "anthropic", "file_id": "x",
-            "question": "", "intent": None, "chart_type": None,
+            "api_key": None, "question": "", "intent": None, "chart_type": None,
             "generated_code": None, "execution_result": None,
             "plotly_json": None, "retry_count": 0,
         }
