@@ -11,6 +11,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   chart?: PlotlyFigure;
+  isError?: boolean;
 }
 
 export interface FileInfo {

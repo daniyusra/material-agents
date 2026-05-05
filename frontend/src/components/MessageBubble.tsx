@@ -9,16 +9,21 @@ interface MessageBubbleProps {
 export default function MessageBubble({ message, isCurrent }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const hasChart = Boolean(message.chart);
+  const isError = Boolean(message.isError);
+
+  const background = isUser ? "#0070f3" : isError ? "#fff0f0" : hasChart ? "white" : "#f0f0f0";
+  const color = isUser ? "white" : isError ? "#991b1b" : "#111";
+  const border = isError ? "1px solid #fca5a5" : hasChart ? "1px solid #e0e0e0" : "none";
 
   return (
     <div
       style={{
         ...styles.bubble,
         alignSelf: isUser ? "flex-end" : "flex-start",
-        background: isUser ? "#0070f3" : hasChart ? "white" : "#f0f0f0",
-        color: isUser ? "white" : "#111",
+        background,
+        color,
         maxWidth: hasChart ? "95%" : "75%",
-        border: hasChart ? "1px solid #e0e0e0" : "none",
+        border,
       }}
     >
       {message.content || (isCurrent ? "▊" : "")}

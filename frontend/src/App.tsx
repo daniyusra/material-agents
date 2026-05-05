@@ -77,6 +77,7 @@ export default function App() {
         updated[updated.length - 1] = {
           ...updated[updated.length - 1],
           content: `Error: ${err instanceof Error ? err.message : String(err)}`,
+          isError: true,
         };
         return updated;
       });

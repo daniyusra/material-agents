@@ -61,17 +61,45 @@ class ChatRequest(BaseModel):
     api_key: Optional[str] = None  # user-supplied key; falls back to env-var key when absent
 
 
+def _user_facing_error(exc: Exception) -> str:
+    """Convert a provider exception into a short, actionable message for the UI."""
+    msg = str(exc)
+    msg_lower = msg.lower()
+    exc_type = type(exc).__name__
+
+    if (
+        "401" in msg
+        or "AuthenticationError" in exc_type
+        or "authentication" in msg_lower
+        or "incorrect api key" in msg_lower
+        or "invalid api key" in msg_lower
+        or "unauthorized" in msg_lower
+    ):
+        return "API key is invalid or incorrect. Open Options to check your key."
+
+    if "429" in msg or "RateLimitError" in exc_type or "rate limit" in msg_lower:
+        return "Rate limit reached. Please wait a moment and try again."
+
+    if "insufficient_quota" in msg_lower or "quota" in msg_lower:
+        return "API quota exceeded. Check your billing settings with the provider."
+
+    return f"Request failed: {msg[:200]}"
+
+
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     if request.file_id is not None and get_record(request.file_id) is None:
         raise HTTPException(status_code=404, detail="File not found or expired")
 
     async def event_stream():
-        async for item in stream_chat(request.messages, request.provider, request.file_id, request.api_key):
-            if isinstance(item, ChartEvent):
-                yield f"data: {json.dumps({'type': 'chart', 'content': item.figure})}\n\n"
-            else:
-                yield f"data: {json.dumps({'type': 'text', 'content': item})}\n\n"
+        try:
+            async for item in stream_chat(request.messages, request.provider, request.file_id, request.api_key):
+                if isinstance(item, ChartEvent):
+                    yield f"data: {json.dumps({'type': 'chart', 'content': item.figure})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type': 'text', 'content': item})}\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'type': 'error', 'content': _user_facing_error(exc)})}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

@@ -49,9 +49,12 @@ export async function streamChat(
           onText(event.content as string);
         } else if (event.type === "chart") {
           onChart(event.content as PlotlyFigure);
+        } else if (event.type === "error") {
+          throw new Error(event.content as string);
         }
-      } catch {
-        // ignore malformed lines
+      } catch (e) {
+        if (e instanceof Error && e.message) throw e;
+        // ignore other malformed lines
       }
     }
   }
