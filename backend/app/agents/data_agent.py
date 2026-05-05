@@ -46,20 +46,25 @@ _CLASSIFY_SYSTEM = """\
 You are a data analyst assistant. The user has uploaded a dataset.
 Dataset columns: {columns}
 
-Classify the user's question into one of three intents and respond with ONLY valid JSON.
+Read the FULL conversation and classify the LATEST user message into one of three intents.
+Critical rule — interpret follow-ups in context of prior turns:
+- "add X", "include Y", "also show Z", "change colour", "filter to X" after a chart → DATA_VIZ
+- any chart-refinement or chart-modification request → DATA_VIZ, reusing the chart type from the prior turn
+- a question about a number or statistic with no chart context → DATA_ONLY
+- greetings, off-topic questions, general knowledge → NOT_DATA
 
 Intents:
-- NOT_DATA: Not about the dataset (greetings, general knowledge, etc.)
+- NOT_DATA: Not about the dataset
 - DATA_ONLY: Requires data analysis but NO chart (statistics, specific values)
 - DATA_VIZ: Requires a chart visualization
 
-If DATA_VIZ, also choose the most appropriate chart type:
-- histogram    — distribution of a single variable ("Show me the distribution of X")
-- boxplot      — compare distributions across groups ("Compare A vs B vs C")
-- scatter      — relationship / correlation between two variables ("Is X correlated with Y?")
-- heatmap      — correlation matrix across all numeric variables ("Which variables matter most?")
-- line         — trend over a sequence or time axis ("How does X change across experiments?")
-- scatter_matrix — overview of all pairwise variable relationships ("Show me everything at once")
+If DATA_VIZ, choose the most appropriate chart type (or reuse the one from the prior turn if this is a refinement):
+- histogram    — distribution of a single variable
+- boxplot      — compare distributions across groups
+- scatter      — relationship / correlation between two variables
+- heatmap      — correlation matrix across all numeric variables
+- line         — trend over a sequence or time axis
+- scatter_matrix — overview of all pairwise variable relationships
 
 Respond with ONLY valid JSON, no explanation:
 {{"intent": "NOT_DATA"|"DATA_ONLY"|"DATA_VIZ", "chart_type": null|"histogram"|"boxplot"|"scatter"|"heatmap"|"line"|"scatter_matrix"}}"""
@@ -69,7 +74,9 @@ You have access to a pandas DataFrame called `df`.
 
 {df_info}
 
-Write Python/pandas code to answer the user's question.
+Read the full conversation below, then write Python/pandas code that answers the LATEST user request.
+If this is a follow-up (e.g. "also include X", "filter to Y"), incorporate all prior context into a
+single, complete answer — do not reference any previous result, just produce new self-contained code.
 Rules:
 - `df` and `pd` are in scope — do not import anything.
 - Store the final answer in a variable named `result`.
@@ -80,7 +87,9 @@ You have access to a pandas DataFrame called `df`.
 
 {df_info}
 
-Create a {chart_type} chart to answer the user's question.
+Read the full conversation below, then create a {chart_type} chart that satisfies the LATEST user request.
+If this is a follow-up modification (e.g. "add horror movies", "change colour", "filter to X"), produce
+a single, complete new chart that incorporates ALL requested changes — do not reference any previous code.
 In scope: `df`, `pd`, `px` (plotly.express), `go` (plotly.graph_objects).
 Assign the final Plotly Figure to a variable named `result`.
 Output ONLY raw Python code. No markdown fences, no explanation.
@@ -269,7 +278,7 @@ async def _classify_node(state: DataAgentState) -> dict:
     columns = ", ".join(record.columns) if record else "unknown"
     prompt = [
         SystemMessage(content=_CLASSIFY_SYSTEM.format(columns=columns)),
-        HumanMessage(content=state["question"]),
+        *_to_lc_messages(state["messages"]),
     ]
     response = await model.ainvoke(prompt)
     intent, chart_type = _parse_classification(str(response.content))
@@ -289,7 +298,7 @@ async def _generate_code_node(state: DataAgentState) -> dict:
     )
     response = await model.ainvoke([
         SystemMessage(content=system),
-        HumanMessage(content=state["question"]),
+        *_to_lc_messages(state["messages"]),
     ])
     return {"generated_code": _strip_fences(str(response.content))}
 
@@ -348,7 +357,14 @@ async def _synthesize_node(state: DataAgentState) -> dict:
 
 async def _plain_chat_node(state: DataAgentState) -> dict:
     model = get_model(state["provider"], state.get("api_key"))
-    await model.ainvoke(_to_lc_messages(state["messages"]))
+    record = get_record(state["file_id"])
+    columns = ", ".join(record.columns) if record else "unknown"
+    system = SystemMessage(content=(
+        f"You are a helpful data analyst assistant. "
+        f"The user has uploaded a dataset with columns: {columns}. "
+        f"You can answer questions, analyse data, and create visualisations."
+    ))
+    await model.ainvoke([system, *_to_lc_messages(state["messages"])])
     return {}
 
 
