@@ -23,69 +23,201 @@ export default function OptionsModal({ provider, apiKeys, onSave, onClose }: Opt
       anthropic: draft.anthropic || undefined,
       openai: draft.openai || undefined,
     };
-
     if (newKeys.anthropic) setCookie("apikey_anthropic", newKeys.anthropic);
     else deleteCookie("apikey_anthropic");
-
     if (newKeys.openai) setCookie("apikey_openai", newKeys.openai);
     else deleteCookie("apikey_openai");
-
     onSave(draft.provider, newKeys);
   };
 
   return (
-    <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={styles.modal}>
-        <div style={styles.modalHeader}>
-          <span style={styles.modalTitle}>Options</span>
-          <button onClick={onClose} style={styles.closeBtn} aria-label="Close">✕</button>
-        </div>
+    <>
+      <style>{`
+        .om-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(8, 10, 12, 0.78);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          backdrop-filter: blur(2px);
+        }
+        .om-modal {
+          background: var(--bg-surface);
+          border: 1px solid var(--border-muted);
+          border-radius: var(--radius-lg);
+          padding: var(--space-6);
+          width: 420px;
+          max-width: calc(100vw - 2rem);
+          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+        }
+        .om-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: var(--space-6);
+        }
+        .om-title {
+          font-family: var(--font-display);
+          font-size: 1rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          letter-spacing: 0.01em;
+        }
+        .om-close {
+          background: none;
+          border: none;
+          color: var(--text-dim);
+          font-size: 1rem;
+          cursor: pointer;
+          padding: var(--space-1) var(--space-2);
+          border-radius: var(--radius-sm);
+          transition: color var(--transition-fast);
+          line-height: 1;
+        }
+        .om-close:hover { color: var(--text-primary); }
+        .om-label {
+          font-family: var(--font-mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--text-dim);
+          margin-bottom: var(--space-3);
+          display: block;
+        }
+        .om-radio-group { display: flex; flex-direction: column; gap: var(--space-2); }
+        .om-radio-label {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          cursor: pointer;
+        }
+        .om-radio-label input[type="radio"] { accent-color: var(--accent); }
+        .om-divider {
+          border: none;
+          border-top: 1px solid var(--border-dim);
+          margin: var(--space-5) 0;
+        }
+        .om-key-field { margin-bottom: var(--space-5); }
+        .om-key-row { display: flex; gap: var(--space-2); }
+        .om-key-input {
+          flex: 1;
+          padding: 0.5rem var(--space-3);
+          background: var(--bg-base);
+          border: 1px solid var(--border-muted);
+          border-radius: var(--radius-md);
+          color: var(--text-primary);
+          font-family: var(--font-mono);
+          font-size: 0.8rem;
+          outline: none;
+          transition: border-color var(--transition-fast);
+        }
+        .om-key-input:focus { border-color: var(--accent-border); }
+        .om-key-input::placeholder { color: var(--text-dim); }
+        .om-show-btn {
+          padding: 0.5rem var(--space-3);
+          background: transparent;
+          border: 1px solid var(--border-muted);
+          border-radius: var(--radius-md);
+          color: var(--text-secondary);
+          font-size: 0.78rem;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: color var(--transition-fast), border-color var(--transition-fast);
+        }
+        .om-show-btn:hover { color: var(--text-primary); border-color: var(--accent-border); }
+        .om-key-hint {
+          display: block;
+          font-family: var(--font-mono);
+          font-size: 0.7rem;
+          color: var(--text-dim);
+          margin-top: var(--space-1);
+        }
+        .om-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: var(--space-2);
+          margin-top: var(--space-6);
+        }
+        .om-cancel {
+          padding: 0.5rem var(--space-4);
+          background: transparent;
+          border: 1px solid var(--border-muted);
+          border-radius: var(--radius-md);
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: color var(--transition-fast);
+        }
+        .om-cancel:hover { color: var(--text-primary); }
+        .om-save {
+          padding: 0.5rem var(--space-5);
+          background: var(--accent);
+          border: none;
+          border-radius: var(--radius-md);
+          color: var(--bg-void);
+          font-family: var(--font-display);
+          font-weight: 700;
+          font-size: 0.85rem;
+          letter-spacing: 0.04em;
+          cursor: pointer;
+          transition: opacity var(--transition-fast);
+        }
+        .om-save:hover { opacity: 0.85; }
+      `}</style>
 
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>Provider</div>
-          <div style={styles.radioGroup}>
+      <div className="om-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="om-modal">
+          <div className="om-header">
+            <span className="om-title">Options</span>
+            <button onClick={onClose} className="om-close" aria-label="Close">✕</button>
+          </div>
+
+          <span className="om-label">Provider</span>
+          <div className="om-radio-group">
             {PROVIDERS.map((p) => (
-              <label key={p.value} style={styles.radioLabel}>
+              <label key={p.value} className="om-radio-label">
                 <input
                   type="radio"
                   name="provider"
                   value={p.value}
                   checked={draft.provider === p.value}
                   onChange={() => setDraft((d) => ({ ...d, provider: p.value }))}
-                  style={{ marginRight: "0.4rem" }}
                 />
                 {p.label}
               </label>
             ))}
           </div>
-        </div>
 
-        <div style={styles.divider} />
+          <hr className="om-divider" />
 
-        <KeyField
-          label="Anthropic API Key"
-          placeholder="sk-ant-..."
-          value={draft.anthropic}
-          show={showKey.anthropic}
-          onChange={(v) => setDraft((d) => ({ ...d, anthropic: v }))}
-          onToggleShow={() => setShowKey((s) => ({ ...s, anthropic: !s.anthropic }))}
-        />
+          <KeyField
+            label="Anthropic API Key"
+            placeholder="sk-ant-..."
+            value={draft.anthropic}
+            show={showKey.anthropic}
+            onChange={(v) => setDraft((d) => ({ ...d, anthropic: v }))}
+            onToggleShow={() => setShowKey((s) => ({ ...s, anthropic: !s.anthropic }))}
+          />
+          <KeyField
+            label="OpenAI API Key"
+            placeholder="sk-..."
+            value={draft.openai}
+            show={showKey.openai}
+            onChange={(v) => setDraft((d) => ({ ...d, openai: v }))}
+            onToggleShow={() => setShowKey((s) => ({ ...s, openai: !s.openai }))}
+          />
 
-        <KeyField
-          label="OpenAI API Key"
-          placeholder="sk-..."
-          value={draft.openai}
-          show={showKey.openai}
-          onChange={(v) => setDraft((d) => ({ ...d, openai: v }))}
-          onToggleShow={() => setShowKey((s) => ({ ...s, openai: !s.openai }))}
-        />
-
-        <div style={styles.actions}>
-          <button onClick={onClose} style={styles.cancelBtn}>Cancel</button>
-          <button onClick={handleSave} style={styles.saveBtn}>Save</button>
+          <div className="om-actions">
+            <button onClick={onClose} className="om-cancel">Cancel</button>
+            <button onClick={handleSave} className="om-save">Save</button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -100,164 +232,27 @@ interface KeyFieldProps {
 
 function KeyField({ label, placeholder, value, show, onChange, onToggleShow }: KeyFieldProps) {
   return (
-    <div style={styles.keyField}>
-      <label style={styles.keyLabel}>{label}</label>
-      <div style={styles.keyInputRow}>
+    <div className="om-key-field">
+      <span className="om-label">{label}</span>
+      <div className="om-key-row">
         <input
           type={show ? "text" : "password"}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          style={styles.keyInput}
+          className="om-key-input"
           autoComplete="off"
           spellCheck={false}
         />
-        <button onClick={onToggleShow} style={styles.showBtn} aria-label={show ? "Hide" : "Show"}>
+        <button onClick={onToggleShow} className="om-show-btn" aria-label={show ? "Hide" : "Show"}>
           {show ? "Hide" : "Show"}
         </button>
       </div>
       {value && (
-        <span style={styles.keyHint}>
+        <span className="om-key-hint">
           {value.slice(0, 8)}{"•".repeat(Math.min(value.length - 8, 20))}
         </span>
       )}
     </div>
   );
 }
-
-const styles = {
-  overlay: {
-    position: "fixed" as const,
-    inset: 0,
-    background: "rgba(0,0,0,0.45)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-  },
-  modal: {
-    background: "white",
-    borderRadius: 12,
-    padding: "1.5rem",
-    width: 420,
-    maxWidth: "calc(100vw - 2rem)",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-  },
-  modalHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "1.25rem",
-  },
-  modalTitle: {
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    color: "#111",
-  },
-  closeBtn: {
-    background: "none",
-    border: "none",
-    fontSize: "1rem",
-    cursor: "pointer",
-    color: "#888",
-    padding: "0.2rem 0.4rem",
-    borderRadius: 4,
-  },
-  section: {
-    marginBottom: "1rem",
-  },
-  sectionLabel: {
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    color: "#555",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    marginBottom: "0.5rem",
-  },
-  radioGroup: {
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: "0.35rem",
-  },
-  radioLabel: {
-    display: "flex",
-    alignItems: "center",
-    fontSize: "0.9rem",
-    color: "#222",
-    cursor: "pointer",
-  },
-  divider: {
-    height: 1,
-    background: "#eee",
-    margin: "1rem 0",
-  },
-  keyField: {
-    marginBottom: "1rem",
-  },
-  keyLabel: {
-    display: "block",
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    color: "#555",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    marginBottom: "0.4rem",
-  },
-  keyInputRow: {
-    display: "flex",
-    gap: "0.5rem",
-  },
-  keyInput: {
-    flex: 1,
-    padding: "0.45rem 0.7rem",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    fontSize: "0.875rem",
-    fontFamily: "monospace",
-    outline: "none",
-  },
-  showBtn: {
-    padding: "0.45rem 0.7rem",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    background: "white",
-    fontSize: "0.8rem",
-    cursor: "pointer",
-    color: "#555",
-    whiteSpace: "nowrap" as const,
-  },
-  keyHint: {
-    fontSize: "0.75rem",
-    color: "#999",
-    marginTop: "0.3rem",
-    display: "block",
-    fontFamily: "monospace",
-  },
-  actions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "0.5rem",
-    marginTop: "1.5rem",
-  },
-  cancelBtn: {
-    padding: "0.5rem 1rem",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    background: "white",
-    fontSize: "0.875rem",
-    cursor: "pointer",
-    color: "#555",
-    fontFamily: "inherit",
-  },
-  saveBtn: {
-    padding: "0.5rem 1.25rem",
-    borderRadius: 8,
-    border: "none",
-    background: "#0070f3",
-    color: "white",
-    fontSize: "0.875rem",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    fontWeight: 600,
-  },
-} as const;
