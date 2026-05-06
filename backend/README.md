@@ -94,6 +94,20 @@ The app will be live at `https://material-agents-backend.fly.dev` (or your custo
 fly deploy
 ```
 
+### Automated deploys via GitHub Actions
+
+A workflow at `.github/workflows/deploy-backend.yml` in the repo root triggers `fly deploy` automatically on every push to `main` that touches the `backend/` directory.
+
+To enable it:
+
+1. Generate a Fly API token:
+   ```bash
+   fly auth token
+   ```
+2. Add it to your GitHub repo under **Settings → Secrets and variables → Actions** as `FLY_API_TOKEN`.
+
+No further config is needed — the workflow reads the token and runs `fly deploy --remote-only` from the `backend/` directory.
+
 ### Useful commands
 
 ```bash

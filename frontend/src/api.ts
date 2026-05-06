@@ -1,9 +1,13 @@
 import type { FileInfo, Message, PlotlyFigure, Provider } from "./types";
 
+// In production, set VITE_API_BASE_URL to the backend origin (e.g. https://material-agents-backend.fly.dev).
+// In local dev it's empty, so the Vite proxy handles /api/* requests.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export async function uploadFile(file: File): Promise<FileInfo> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: form });
+  const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: form });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
@@ -23,7 +27,7 @@ export async function streamChat(
   onText: (token: string) => void,
   onChart: (fig: PlotlyFigure) => void,
 ): Promise<void> {
-  const res = await fetch("/api/chat", {
+  const res = await fetch(`${API_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
