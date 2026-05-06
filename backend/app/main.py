@@ -90,7 +90,7 @@ async def upload(request: Request, file: UploadFile):
         raise HTTPException(status_code=422, detail=str(exc))
     log.info("file_uploaded", extra={
         "file_id": record.file_id,
-        "filename": record.filename,
+        "upload_filename": record.filename,
         "rows": record.rows,
         "columns": len(record.columns),
     })
