@@ -1,3 +1,4 @@
+import { createParser } from "eventsource-parser";
 import type { FileInfo, Message, PlotlyFigure, Provider } from "./types";
 
 // In production, set VITE_API_BASE_URL to the backend origin (e.g. https://material-agents-backend.fly.dev).
@@ -37,37 +38,36 @@ export async function streamChat(
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    // Accumulate across reads — a single SSE event (especially a chart JSON)
-    // can span multiple chunks. Split only on the SSE event boundary (\n\n).
-    buffer += decoder.decode(value, { stream: true });
-    const events = buffer.split("\n\n");
-    buffer = events.pop() ?? "";
-
-    for (const event of events) {
-      for (const line of event.split("\n")) {
-        if (!line.startsWith("data: ")) continue;
-        const data = line.slice(6);
-        if (data === "[DONE]") return;
+  await new Promise<void>((resolve, reject) => {
+    const parser = createParser({
+      onEvent(event) {
+        if (event.data === "[DONE]") { resolve(); return; }
         try {
-          const parsed = JSON.parse(data) as { type?: string; content: unknown };
+          const parsed = JSON.parse(event.data) as { type?: string; content: unknown };
           if (!parsed.type || parsed.type === "text") {
             onText(parsed.content as string);
           } else if (parsed.type === "chart") {
             onChart(parsed.content as PlotlyFigure);
           } else if (parsed.type === "error") {
-            throw new Error(parsed.content as string);
+            reject(new Error(parsed.content as string));
           }
         } catch (e) {
-          if (e instanceof SyntaxError) continue;
-          throw e;
+          if (!(e instanceof SyntaxError)) reject(e);
         }
+      },
+    });
+
+    void (async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) { resolve(); break; }
+          parser.feed(decoder.decode(value, { stream: true }));
+        }
+      } catch (e) {
+        reject(e);
       }
-    }
-  }
+    })();
+  });
 }
