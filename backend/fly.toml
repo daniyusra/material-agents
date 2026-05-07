@@ -1,42 +1,48 @@
-# fly.toml — Fly.io deployment config for the Material Agents backend.
-# Generated as a template; adjust app name and region as needed.
-# Deploy with: fly deploy
+# fly.toml app configuration file generated for material-agents-backend on 2026-05-07T23:22:27+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "material-agents-backend"   # change to your chosen app name
-primary_region = "sin"            # Singapore — change to your nearest region
+app = 'material-agents-backend'
+primary_region = 'nrt'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8080"
+  PORT = '8080'
 
-# Persistent volume for uploaded files (created separately with `fly volumes create`)
-[mounts]
-  source = "uploads_data"
-  destination = "/data"
+[[mounts]]
+  source = 'uploads_data'
+  destination = '/data'
 
 [[services]]
-  protocol = "tcp"
+  protocol = 'tcp'
   internal_port = 8080
 
   [[services.ports]]
     port = 80
-    handlers = ["http"]
+    handlers = ['http']
     force_https = true
 
   [[services.ports]]
     port = 443
-    handlers = ["tls", "http"]
+    handlers = ['tls', 'http']
 
   [services.concurrency]
-    type = "requests"
+    type = 'requests'
     hard_limit = 50
     soft_limit = 40
 
   [[services.http_checks]]
-    interval = 10000
-    timeout = 2000
-    grace_period = "5s"
-    method = "GET"
-    path = "/health"
+    interval = '10s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'GET'
+    path = '/health'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024

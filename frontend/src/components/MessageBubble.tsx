@@ -11,16 +11,16 @@ export default function MessageBubble({ message, isCurrent }: MessageBubbleProps
   const isError = Boolean(message.isError);
   const hasChart = Boolean(message.chart);
 
-  const classes = [
-    "bubble",
-    isUser ? "bubble-user" : "bubble-assistant",
-    hasChart ? "bubble-wide" : "",
-    isError ? "bubble-error" : "",
-  ].filter(Boolean).join(" ");
+  const base = "py-3 px-4 rounded-lg text-[0.875rem] leading-[1.7] whitespace-pre-wrap break-words";
+  const variant = isUser
+    ? "self-end bg-bg-elevated border border-border-muted text-text-primary"
+    : "self-start bg-bg-surface border border-border-dim text-text-primary";
+  const width = hasChart ? "max-w-[95%]" : "max-w-[75%]";
+  const errStyle = isError ? "bg-error-bg border-[rgba(248,113,113,0.22)] text-error" : "";
 
   return (
-    <div className={classes}>
-      {message.content || (isCurrent ? <span className="bubble-cursor">▊</span> : "")}
+    <div className={`${base} ${variant} ${width} ${errStyle}`}>
+      {message.content || (isCurrent ? <span className="inline-block text-accent animate-cursor-blink">▊</span> : "")}
       {message.chart && <ChartPanel figure={message.chart} />}
     </div>
   );

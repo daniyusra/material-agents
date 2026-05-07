@@ -1,103 +1,63 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
 
-:root {
-  /* Backgrounds */
-  --bg-void: #080a0c;
-  --bg-base: #0d1219;
-  --bg-surface: #111b27;
-  --bg-elevated: #172233;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  /* Borders */
-  --border-dim: #192534;
-  --border-muted: #223040;
+@layer base {
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
 
-  /* Text */
-  --text-primary: #c8d8e8;
-  --text-secondary: #7090a8;
-  --text-dim: #405060;
+  body {
+    @apply bg-bg-void text-text-primary font-body text-base leading-[1.6] antialiased min-h-screen;
+  }
 
-  /* Accent: research teal — oscilloscope / spectrometer readout colour */
-  --accent: #22c9c9;
-  --accent-glow: rgba(34, 201, 201, 0.12);
-  --accent-border: rgba(34, 201, 201, 0.28);
-  --accent-text: #9ee4e4;
+  a {
+    @apply text-inherit no-underline;
+  }
 
-  /* Semantic */
-  --error: #f87171;
-  --error-bg: rgba(248, 113, 113, 0.07);
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
 
-  /* Typography */
-  --font-display: 'Syne', system-ui, sans-serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  input, textarea, select {
+    font-family: inherit;
+  }
 
-  /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-24: 6rem;
+  input[type="radio"] {
+    accent-color: #22c9c9;
+  }
 
-  /* Radius */
-  --radius-sm: 3px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  ::selection {
+    background: rgba(34, 201, 201, 0.12);
+    color: #9ee4e4;
+  }
 
-  /* Nav height */
-  --nav-h: 3.5rem;
-
-  /* Transitions */
-  --transition-fast: 120ms ease;
-  --transition-med: 220ms ease;
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #0d1219; }
+  ::-webkit-scrollbar-thumb { background: #223040; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #405060; }
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer components {
+  /* Hero dot-grid background and radial fade — cannot be expressed as Tailwind utilities */
+  .lp-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #192534 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+  }
 
-html {
-  font-size: 16px;
-  scroll-behavior: smooth;
+  .lp-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, #080a0c 100%);
+    pointer-events: none;
+  }
 }
-
-body {
-  background: var(--bg-void);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 1rem;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-input, textarea, select {
-  font-family: inherit;
-}
-
-::selection {
-  background: var(--accent-glow);
-  color: var(--accent-text);
-}
-
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
-::-webkit-scrollbar-thumb { background: var(--border-muted); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }

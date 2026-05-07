@@ -4,14 +4,8 @@ import Nav from "../components/Nav";
 export default function Layout() {
   return (
     <>
-      <style>{`
-        .layout-main {
-          padding-top: var(--nav-h);
-          min-height: 100vh;
-        }
-      `}</style>
       <Nav />
-      <main className="layout-main">
+      <main className="pt-nav min-h-screen">
         <Outlet />
       </main>
     </>

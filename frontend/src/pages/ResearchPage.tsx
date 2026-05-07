@@ -99,148 +99,6 @@ export default function ResearchPage() {
 
   return (
     <>
-      <style>{`
-        .rp-page {
-          height: calc(100vh - var(--nav-h));
-          display: flex;
-          flex-direction: column;
-          max-width: 900px;
-          margin: 0 auto;
-          padding: 0 var(--space-4);
-        }
-
-        /* Upload state */
-        .rp-upload-zone {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .rp-dropzone {
-          width: 100%;
-          max-width: 480px;
-          border: 1px dashed var(--border-muted);
-          border-radius: var(--radius-lg);
-          padding: var(--space-12) var(--space-8);
-          text-align: center;
-          transition: border-color var(--transition-fast), background var(--transition-fast);
-        }
-        .rp-dropzone.drag-over {
-          border-color: var(--accent);
-          background: var(--accent-glow);
-        }
-        .rp-upload-icon {
-          font-family: var(--font-mono);
-          font-size: 2.2rem;
-          color: var(--accent);
-          opacity: 0.7;
-          margin-bottom: var(--space-5);
-          display: block;
-        }
-        .rp-upload-title {
-          font-family: var(--font-display);
-          font-size: 1.05rem;
-          font-weight: 600;
-          color: var(--text-primary);
-          margin-bottom: var(--space-2);
-        }
-        .rp-upload-hint {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          font-weight: 300;
-          margin-bottom: var(--space-6);
-          line-height: 1.55;
-        }
-        .rp-upload-sep {
-          display: block;
-          font-family: var(--font-mono);
-          font-size: 0.68rem;
-          color: var(--text-dim);
-          letter-spacing: 0.1em;
-          margin: var(--space-4) 0;
-        }
-        .rp-upload-btn {
-          display: inline-block;
-          padding: 0.65rem var(--space-6);
-          background: var(--accent);
-          color: var(--bg-void);
-          font-family: var(--font-display);
-          font-weight: 700;
-          font-size: 0.85rem;
-          letter-spacing: 0.05em;
-          border: none;
-          border-radius: var(--radius-md);
-          cursor: pointer;
-          transition: opacity var(--transition-fast);
-        }
-        .rp-upload-btn:hover { opacity: 0.85; }
-        .rp-upload-formats {
-          margin-top: var(--space-4);
-          font-family: var(--font-mono);
-          font-size: 0.68rem;
-          color: var(--text-dim);
-          letter-spacing: 0.1em;
-        }
-        .rp-upload-error {
-          margin-top: var(--space-4);
-          font-size: 0.82rem;
-          color: var(--error);
-          background: var(--error-bg);
-          padding: var(--space-2) var(--space-3);
-          border-radius: var(--radius-md);
-          border: 1px solid rgba(248, 113, 113, 0.2);
-        }
-
-        /* Chat header */
-        .rp-chat-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: var(--space-3) 0;
-          border-bottom: 1px solid var(--border-dim);
-          flex-wrap: wrap;
-          gap: var(--space-2);
-        }
-        .rp-header-left { display: flex; align-items: center; gap: var(--space-3); }
-        .rp-header-right { display: flex; align-items: center; gap: var(--space-2); }
-        .rp-file-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-2);
-          font-family: var(--font-mono);
-          font-size: 0.72rem;
-          color: var(--accent-text);
-          background: var(--accent-glow);
-          border: 1px solid var(--accent-border);
-          padding: 0.2rem var(--space-3);
-          border-radius: var(--radius-sm);
-          max-width: 200px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .rp-file-mark { color: var(--accent); flex-shrink: 0; }
-        .rp-meta {
-          font-family: var(--font-mono);
-          font-size: 0.68rem;
-          color: var(--text-dim);
-          letter-spacing: 0.06em;
-        }
-        .rp-header-btn {
-          padding: 0.3rem var(--space-3);
-          border-radius: var(--radius-md);
-          border: 1px solid var(--border-muted);
-          background: transparent;
-          color: var(--text-secondary);
-          font-size: 0.78rem;
-          letter-spacing: 0.02em;
-          cursor: pointer;
-          transition: color var(--transition-fast), border-color var(--transition-fast);
-        }
-        .rp-header-btn:hover { color: var(--text-primary); border-color: var(--accent-border); }
-        .rp-header-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-      `}</style>
-
       {showOptions && (
         <OptionsModal
           provider={provider}
@@ -250,23 +108,31 @@ export default function ResearchPage() {
         />
       )}
 
-      <div className="rp-page">
+      <div className="h-[calc(100vh-3.5rem)] flex flex-col max-w-[900px] mx-auto px-4">
         {!fileInfo ? (
-          <div className="rp-upload-zone">
+          <div className="flex-1 flex items-center justify-center">
             <div
-              className={`rp-dropzone${dragOver ? " drag-over" : ""}`}
+              className={`w-full max-w-[480px] border border-dashed rounded-lg py-12 px-8 text-center transition-[border-color,background] duration-[120ms] ease ${
+                dragOver ? "border-accent bg-accent-glow" : "border-border-muted"
+              }`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
             >
-              <span className="rp-upload-icon">⊡</span>
-              <div className="rp-upload-title">Load a dataset</div>
-              <p className="rp-upload-hint">
+              <span className="font-mono text-[2.2rem] text-accent opacity-70 mb-5 block">⊡</span>
+              <div className="font-display text-[1.05rem] font-semibold text-text-primary mb-2">
+                Load a dataset
+              </div>
+              <p className="text-[0.85rem] text-text-secondary font-light mb-6 leading-[1.55]">
                 Drag your tabular data file here<br />to begin analysis
               </p>
-              <span className="rp-upload-sep">— or —</span>
+              <span className="block font-mono text-[0.68rem] text-text-dim tracking-[0.1em] my-4">
+                — or —
+              </span>
               <label>
-                <span className="rp-upload-btn" style={uploading ? { opacity: 0.4 } : {}}>
+                <span
+                  className={`inline-block py-[0.65rem] px-6 bg-accent text-bg-void font-display font-bold text-[0.85rem] tracking-[0.05em] border-none rounded-md cursor-pointer transition-opacity duration-[120ms] ease hover:opacity-85 ${uploading ? "opacity-40" : ""}`}
+                >
                   {uploading ? "Processing…" : "Select file"}
                 </span>
                 <input
@@ -274,36 +140,44 @@ export default function ResearchPage() {
                   accept={ACCEPTED}
                   onChange={onFileInput}
                   disabled={uploading}
-                  style={{ display: "none" }}
+                  className="hidden"
                 />
               </label>
-              <p className="rp-upload-formats">CSV · TSV · XLSX</p>
-              {uploadError && <p className="rp-upload-error">{uploadError}</p>}
+              <p className="mt-4 font-mono text-[0.68rem] text-text-dim tracking-[0.1em]">
+                CSV · TSV · XLSX
+              </p>
+              {uploadError && (
+                <p className="mt-4 text-[0.82rem] text-error bg-error-bg py-2 px-3 rounded-md border border-[rgba(248,113,113,0.2)]">
+                  {uploadError}
+                </p>
+              )}
             </div>
           </div>
         ) : (
           <>
-            <div className="rp-chat-header">
-              <div className="rp-header-left">
-                <span className="rp-file-badge">
-                  <span className="rp-file-mark">◈</span>
+            <div className="flex items-center justify-between py-3 border-b border-border-dim flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-2 font-mono text-[0.72rem] text-accent-text bg-accent-glow border border-accent-border py-[0.2rem] px-3 rounded-sm max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="text-accent shrink-0">◈</span>
                   {fileInfo.filename}
                 </span>
-                <span className="rp-meta">
+                <span className="font-mono text-[0.68rem] text-text-dim tracking-[0.06em]">
                   {fileInfo.rows.toLocaleString()} rows · {fileInfo.columns.length} cols
                 </span>
               </div>
-              <div className="rp-header-right">
-                <span className="rp-meta">{PROVIDER_LABEL[provider]}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[0.68rem] text-text-dim tracking-[0.06em]">
+                  {PROVIDER_LABEL[provider]}
+                </span>
                 <button
-                  className="rp-header-btn"
+                  className="py-[0.3rem] px-3 rounded-md border border-border-muted bg-transparent text-text-secondary text-[0.78rem] tracking-[0.02em] cursor-pointer transition-[color,border-color] duration-[120ms] ease hover:text-text-primary hover:border-accent-border disabled:opacity-35 disabled:cursor-not-allowed"
                   onClick={() => setShowOptions(true)}
                   disabled={streaming}
                 >
                   ⚙ Options
                 </button>
                 <button
-                  className="rp-header-btn"
+                  className="py-[0.3rem] px-3 rounded-md border border-border-muted bg-transparent text-text-secondary text-[0.78rem] tracking-[0.02em] cursor-pointer transition-[color,border-color] duration-[120ms] ease hover:text-text-primary hover:border-accent-border disabled:opacity-35 disabled:cursor-not-allowed"
                   onClick={() => { setFileInfo(null); setMessages([]); }}
                   disabled={streaming}
                 >

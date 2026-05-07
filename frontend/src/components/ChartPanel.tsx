@@ -43,9 +43,9 @@ export default function ChartPanel({ figure }: ChartPanelProps) {
   };
 
   return (
-    <div className="cp-wrapper">
+    <div className="mt-3">
       {/* Fixed height prevents Plotly resize-observer feedback loop on scroll */}
-      <div className="cp-container" style={{ height: CHART_HEIGHT }}>
+      <div className="w-full overflow-hidden rounded-md border border-border-dim bg-bg-base h-[420px]">
         <Plot
           data={figure.data}
           layout={darkLayout}
@@ -58,7 +58,10 @@ export default function ChartPanel({ figure }: ChartPanelProps) {
           }}
         />
       </div>
-      <button onClick={() => downloadJson(figure)} className="cp-dl-btn">
+      <button
+        onClick={() => downloadJson(figure)}
+        className="mt-2 py-[0.28rem] px-3 bg-transparent border border-border-muted rounded-sm font-mono text-[0.68rem] tracking-[0.06em] text-text-dim cursor-pointer transition-[color,border-color] duration-[120ms] ease hover:text-text-secondary hover:border-accent-border"
+      >
         ↓ Export JSON
       </button>
     </div>

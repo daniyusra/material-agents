@@ -5,14 +5,13 @@
 - **Framework:** React 18 + TypeScript
 - **Build tool:** Vite
 - **Charts:** react-plotly.js (renders Plotly figures returned by the backend)
-- **No UI library** — plain inline styles
+- **Styling:** Tailwind CSS v3 — no UI library, no CSS modules, no `<style>` tags
 
 ## Running
 
 ```bash
-nvm use 20
-npm install
-npm run dev   # → http://localhost:5173
+PATH=/home/daniyusra/.nvm/versions/node/v20.20.0/bin:$PATH npm install
+PATH=/home/daniyusra/.nvm/versions/node/v20.20.0/bin:$PATH npm run dev   # → http://localhost:5173
 ```
 
 The Vite dev server proxies `/api` → `http://localhost:8000`, so the backend must be running.
@@ -47,9 +46,28 @@ Two top-level screens controlled by `App.tsx`:
 
 `ChartPanel` wraps `<Plot>` in a fixed-height container (`420px`, `overflow: hidden`) to prevent the Plotly `useResizeHandler` + `autosize` feedback loop that causes vertical overflow on scroll.
 
+## Design system
+
+All tokens live in `tailwind.config.js` under `theme.extend` and are available as Tailwind classes everywhere:
+
+| Token group | Config key | Example class |
+|---|---|---|
+| Backgrounds | `colors.bg-*` | `bg-bg-surface`, `bg-bg-void` |
+| Borders | `colors.border-*` | `border-border-dim`, `border-border-muted` |
+| Text | `colors.text-*` | `text-text-primary`, `text-text-secondary` |
+| Accent | `colors.accent*` | `bg-accent`, `text-accent-text`, `border-accent-border` |
+| Error | `colors.error*` | `text-error`, `bg-error-bg` |
+| Fonts | `fontFamily.*` | `font-display`, `font-body`, `font-mono` |
+| Radii | `borderRadius.*` | `rounded-sm` (3px), `rounded-md` (6px), `rounded-lg` (10px) |
+| Nav height | `spacing.nav` | `h-nav`, `pt-nav`, `top-nav` (= 3.5rem) |
+| Animations | `animation.*` | `animate-pulse-status`, `animate-cursor-blink` |
+
+`src/styles/global.css` is the single CSS entry point. It contains only Tailwind directives, the Google Fonts import, base resets, and two `@layer components` rules for the hero pseudo-elements (dot grid + radial fade) that cannot be expressed as utilities.
+
 ## Conventions
 
 - All state in `App.tsx`; leaf components are stateless and receive props
 - No state management library; `useState` is sufficient
 - New screens are added as new top-level conditionals in `App.tsx`
 - New agent UIs / panels go in `src/components/`
+- Styling: Tailwind classes inline in JSX; no `<style>` tags; no new CSS files
