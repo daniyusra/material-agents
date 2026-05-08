@@ -3,6 +3,7 @@ import Layout from "./layouts/Layout";
 import LandingPage from "./pages/LandingPage";
 import ResearchPage from "./pages/ResearchPage";
 import AboutPage from "./pages/AboutPage";
+import GraphCanvas from "./tools/visualizer/GraphCanvas";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="research" element={<ResearchPage />} />
           <Route path="about" element={<AboutPage />} />
         </Route>
+        <Route path="/visualizer" element={<GraphCanvas />} />
       </Routes>
     </BrowserRouter>
   );

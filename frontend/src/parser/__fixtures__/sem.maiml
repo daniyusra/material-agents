@@ -1,0 +1,1402 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<maiml version="1.0" features="nested-attributes" xsi:type="maimlRootType" xmlns="http://www.maiml.org/schemas" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:lifecycle="http://www.xes-standard.org/lifecycle.xesext#" xmlns:time="http://www.xes-standard.org/time.xesext#" xmlns:concept="http://www.xes-standard.org/concept.xesext#">
+  <document id="dataFile_sem">
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" /><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><DigestValue>/XssHm+NRmqqTJeCtzPhp1lQPxn9WYhi1cx6cVFP2Ko=</DigestValue></Reference></SignedInfo><SignatureValue>DvJrnhQ3RXx+VOdjQB0CIm26KZgFspjrFxh8O/l/voCJqV/CF10VAUCLahgIAP1A06DkomtOiOo/4LYt4Yn8bWlSDVwhGKnvUI62aPsB9zWutRlJTWUky+kL+zOJPLEkC8poPJfxZls5ECJrmdgcEf7rdHzST2wJ9zj0J3+SRZucuZK9zO6nyY8qeofe+ZMjqzSGz1i8eHWqdqicYzfQgWn05Q52wS01fYp7P5G9sRSFhcjw1rLFxR6rrZrt98OOeD5wbFmb/7upAa78DrIsjv8GY7sr85fbjg3Sxo3MLpGK70Av1lZhn/A6LGOcyn9ZGU3a2EAm+cdAq2X11GuFYw==</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>v7k2/uV+kna82Ori1k7htgKiF1/MNZe3ERF7hsgklhMxY2v05ICKwzTSNf20xNu955VALq+g8m6Ya+eVtj5SKSx4Ki3Mdaa/GKID5irvOT42lUEU2Q6NBiR0bmnBVI9U8T/B8Kf6HGjTQ3Gzvu4/rUsUa57bXj/YXFZLnEpl+hLjsnG8ZO9bNImPGHIZbSU8uffaRETMm8tUONxPHzP4Qt/+XcivZCo98JiV018JoJxcRagf8ZyNMmFFYFSvRm6t2aLrhN4zY4qL//iyWQkb12/MuOluSzgzOw+2iAgtvbcKZAekDRL3M8OjPMHXY2dqTeiuz4s2NTzLZtQYqt96ZQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature>
+    <uuid>2e09f892-c2eb-4ea5-a8c7-b1b4a0231e83</uuid>
+    <name>semDataFile</name>
+    <description>SEM DataFile</description>
+    <annotation>xmail DataFile for Scanning Electron Microscopy.</annotation>
+    <creator id="creator0000">
+      <uuid>886bc823-aeed-372a-9b2f-23925b2052bc</uuid>
+      <name>JEOL</name>
+      <description>JSM-IT700HR</description>
+      <vendorRef id="creator_vendorRef0000" ref="vendor0000" />
+      <instrumentRef id="creator_instrumentRef0000" ref="instrument0000" />
+    </creator>
+    <vendor id="vendor0000">
+      <uuid>886bc823-aeed-372a-9b2f-23925b2052bc</uuid>
+      <name>JEOL</name>
+      <description>JEOL Ltd.</description>
+    </vendor>
+    <owner id="owner0000">
+      <uuid>886bc823-aeed-372a-9b2f-23925b2052bc</uuid>
+      <name>Hitosugi-Lab</name>
+      <description>Hitosugi-Lab</description>
+    </owner>
+    <instrument id="instrument0000">
+      <uuid>ae1bee2b-2f6d-421f-a48a-0791f12f66ea</uuid>
+      <name>scanningElectronMicroscope</name>
+      <description>SEM</description>
+    </instrument>
+    <date>2023-10-25T13:22:23.891+09:00</date>
+  </document>
+  <protocol id="protocol_sem">
+    <uuid>bfe641dd-76cd-4169-99fe-9445334a1d9f</uuid>
+    <name>semProtocol</name>
+    <description>SEM</description>
+    <annotation>Protocol for Scanning Electron Microscopy.</annotation>
+    <method id="method_semMeasurement">
+      <uuid>e862279d-b38b-4840-80f2-c856fd84bfa5</uuid>
+      <name>semMeasurementMethod</name>
+      <description>SEM Measurement</description>
+      <annotation>Measurement Method for Scanning Electron Microscopy.</annotation>
+      <pnml id="sempnml">
+        <uuid>ed24ca34-8c62-43e8-aecb-dcc45f1e9574</uuid>
+        <place id="place_semMaterialMaterial">
+          <name>semMaterialMaterialPlace</name>
+          <description>SEM Material</description>
+        </place>
+        <place id="place_semMeasurementCondition">
+          <name>semMeasurementConditionPlace</name>
+          <description>SEM Measurement Condition</description>
+        </place>
+        <place id="place_semResultImageResult">
+          <name>semResultImageResultPlace</name>
+          <description>SEM Result Image</description>
+        </place>
+        <place id="place_semResultConditionResult">
+          <name>semResultConditionResultPlace</name>
+          <description>SEM Result Condition</description>
+        </place>
+        <transition id="transition_semMeasurement">
+          <name>semMeasurementTransition</name>
+          <description>SEM Measurement</description>
+        </transition>
+        <transition id="transition_semUserProcess">
+          <name>semUserProcessTransition</name>
+          <description>SEM User Process</description>
+        </transition>
+        <transition id="transition_semConverterDataProcessing">
+          <name>semConverterDataProcessingTransition</name>
+          <description>SEM Converter Data Processing</description>
+        </transition>
+        <arc id="arc_semMaterialMaterialInput" source="place_semMaterialMaterial" target="transition_semMeasurement">
+          <name>semMaterialMaterialInputArc</name>
+          <description>SEM Material Material Input Arc</description>
+        </arc>
+        <arc id="arc_semMeasurementConditionInput" source="place_semMeasurementCondition" target="transition_semMeasurement">
+          <name>semMeasurementConditionInputArc</name>
+          <description>SEM Measurement Condition Input Arc</description>
+        </arc>
+        <arc id="arc_semResultImageResultOutput" source="transition_semMeasurement" target="place_semResultImageResult">
+          <name>semResultImageResultOutputArc</name>
+          <description>SEM Result Image Result Output Arc</description>
+        </arc>
+        <arc id="arc_semResultConditionResultOutput" source="transition_semMeasurement" target="place_semResultConditionResult">
+          <name>semResultConditionResultOutputArc</name>
+          <description>SEM Result Condition Result Output Arc</description>
+        </arc>
+        <arc id="arc_semResultImageResultInput" source="place_semResultImageResult" target="transition_semUserProcess">
+          <name>semResultImageResultInputArc</name>
+          <description>SEM Result Image Result Input Arc</description>
+        </arc>
+        <arc id="arc_semResultConditionResultInput" source="place_semResultConditionResult" target="transition_semUserProcess">
+          <name>semResultConditionResultInputArc</name>
+          <description>SEM Result Condition Result Input Arc</description>
+        </arc>
+        <arc id="arc_semResultImageResultToConverterInput" source="place_semResultImageResult" target="transition_semConverterDataProcessing">
+          <name>semResultImageResultToConverterInputArc</name>
+          <description>SEM Result Image Result To Converter Input Arc</description>
+        </arc>
+        <arc id="arc_semResultConditionResultToConverterInput" source="place_semResultConditionResult" target="transition_semConverterDataProcessing">
+          <name>semResultConditionResultToConverterInputArc</name>
+          <description>SEM Result Condition Result To Converter Input Arc</description>
+        </arc>
+      </pnml>
+      <program id="program_semMeasurement">
+        <uuid>3419e6b4-7907-48fe-af96-e29677b383aa</uuid>
+        <name>semMeasurementProgram</name>
+        <description>SEM Measurement</description>
+        <annotation>Measurement Program for Scanning Electron Microscopy.</annotation>
+        <instruction id="instruction_semMeasurement">
+          <uuid>e29e2921-7e17-4046-ad4a-ad1d8f79ed44</uuid>
+          <name>semMeasurementInstruction</name>
+          <description>SEM Measurement</description>
+          <annotation>Measurement Instruction for Scanning Electron Microscopy.</annotation>
+          <transitionRef id="transitionRef_semMeasurement" ref="transition_semMeasurement" />
+        </instruction>
+        <instruction id="instruction_semUserProcess">
+          <uuid>87f45840-56d1-447f-abda-bf7c0dc7ed11</uuid>
+          <name>semUserProcessInstruction</name>
+          <description>SEM User Process</description>
+          <annotation>User Process Instruction for Scanning Electron Microscopy.</annotation>
+          <transitionRef id="transitionRef_semUserProcess" ref="transition_semUserProcess" />
+        </instruction>
+        <instruction id="instruction_semConverterDataProcessing">
+          <uuid>665a6913-1aab-4bc9-b4be-0d7c1696ec29</uuid>
+          <name>semConverterDataProcessingInstruction</name>
+          <description>SEM Converter Data Processing</description>
+          <annotation>Converter Data Processing Instruction for Scanning Electron Microscopy.</annotation>
+          <transitionRef id="transitionRef_semConverterDataProcessing" ref="transition_semConverterDataProcessing" />
+        </instruction>
+      </program>
+    </method>
+    <materialTemplate id="materialTemplate_semMaterial">
+      <uuid>226c359c-c00c-4262-b3e1-8fc176c4ee1c</uuid>
+      <name>semMaterialMaterialTemplate</name>
+      <description>SEM Material</description>
+      <annotation>Material Material Template for Scanning Electron Microscopy.</annotation>
+      <property xsi:type="stringType" key="SampleId">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="SampleName">
+        <value>string</value>
+      </property>
+      <placeRef id="placeRef_semMaterialMaterial" ref="place_semMaterialMaterial" />
+    </materialTemplate>
+    <conditionTemplate id="conditionTemplate_semMeasurement">
+      <uuid>ec924ce9-bbd2-4b5f-aaa0-c957e91b8761</uuid>
+      <name>semMeasurementConditionTemplate</name>
+      <description>SEM Measurement Condition</description>
+      <annotation>Measurement Condition Template for Scanning Electron Microscopy.</annotation>
+      <property xsi:type="dateTimeType" key="dateTime" formatString="YYYY-MM-DDThh:mm:ss.sssTZD">
+        <value>0001-01-01T00:00:00+00:00</value>
+      </property>
+      <property xsi:type="stringType" key="operator">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="instrument">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="imageSizeX" units="pixel">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="imageSizeY" units="pixel">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="colorMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="longType" key="magnification">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionX" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionY" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionZ" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stageRotation" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stageTilt" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionFineZ" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="longType" key="contrast">
+        <value>0</value>
+      </property>
+      <property xsi:type="longType" key="brightness">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="acceleratingVoltage" formatString="0.00" units="kV" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="comment">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="label">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="fieldOfViewX" formatString="0.00" units="um" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="fieldOfViewY" formatString="0.00" units="um" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="numberOfImagesX">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="numberOfImagesY">
+        <value>0</value>
+      </property>
+      <property xsi:type="doubleType" key="pixelSize" formatString="0.00" units="nm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="doubleType" key="standardFieldSizeX" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="doubleType" key="standardFieldSizeY" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="pnuHeight" units="pixel">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="pnuType">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="nickname">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="workingDistance" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="scanTime" formatString="0.00" units="sec" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="scanType">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="vacuumMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="vacuum" units="Pa">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="scanRotation" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="imageNumber">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="detector1">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector2">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector3">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector4">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector1">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector2">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector3">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector4">
+        <value>0</value>
+      </property>
+      <property xsi:type="longType" key="cumulativeNumber">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="specimenTemperature" formatString="0.00" units="℃" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="probeCurrent" formatString="0.00" units="A" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="gunVoltage" formatString="0.00" units="kV" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="biasVoltage" formatString="0.00" units="kV" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="columnMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="doubleType" key="monitorMagnification" formatString="0.00" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="liveFilterMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="tiltMagnificationCorrectionValue" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="objectiveLensType">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="gunType">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="dwellTime" units="ns">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast1">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast2">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast3">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast4">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness1">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness2">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness3">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness4">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="bedCompoSupress">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="bedShadowSupress">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="bedGainMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="bedShadowLevel">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="probeNumberMp" formatString="0.00" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="probeCurrentModeMp">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="beamShiftX" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="beamShiftY" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="dynamicFocus">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="stageDriveType">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveX" units="mm">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveY" units="mm">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveZ" units="mm">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveRotation" units="degree">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveTilt" units="degree">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="lowVacuumMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="longType" key="fieldImageMagnification">
+        <value>0</value>
+      </property>
+      <placeRef id="placeRef_semMeasurementCondition" ref="place_semMeasurementCondition" />
+    </conditionTemplate>
+    <resultTemplate id="resultTemplate_semResultImage">
+      <uuid>cc636fa4-75a2-4d2d-9a57-cdf641541303</uuid>
+      <name>semResultImageResultTemplate</name>
+      <description>SEM Result Image</description>
+      <annotation>Result Image Result Template for Scanning Electron Microscopy.</annotation>
+      <placeRef id="placeRef_semResultImageResult" ref="place_semResultImageResult" />
+    </resultTemplate>
+    <resultTemplate id="resultTemplate_semResultCondition">
+      <uuid>864ebf3b-60df-4718-a56c-2bd720d0b370</uuid>
+      <name>semResultConditionResultTemplate</name>
+      <description>SEM Result Condition</description>
+      <annotation>Result Condition Result Template for Scanning Electron Microscopy.</annotation>
+      <property xsi:type="dateTimeType" key="dateTime" formatString="YYYY-MM-DDThh:mm:ss.sssTZD">
+        <value>0001-01-01T00:00:00+00:00</value>
+      </property>
+      <property xsi:type="stringType" key="operator">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="instrument">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="imageSizeX" units="pixel">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="imageSizeY" units="pixel">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="colorMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="longType" key="magnification">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionX" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionY" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionZ" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stageRotation" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stageTilt" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="stagePositionFineZ" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="longType" key="contrast">
+        <value>0</value>
+      </property>
+      <property xsi:type="longType" key="brightness">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="acceleratingVoltage" formatString="0.00" units="kV" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="comment">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="label">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="fieldOfViewX" formatString="0.00" units="um" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="fieldOfViewY" formatString="0.00" units="um" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="numberOfImagesX">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="numberOfImagesY">
+        <value>0</value>
+      </property>
+      <property xsi:type="doubleType" key="pixelSize" formatString="0.00" units="nm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="doubleType" key="pixelLength" formatString="0.00" units="um/pixel" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="doubleType" key="standardFieldSizeX" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="doubleType" key="standardFieldSizeY" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="pnuHeight" units="pixel">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="pnuType">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="nickname">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="workingDistance" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="scanTime" formatString="0.00" units="sec" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="scanType">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="vacuumMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="vacuum" units="Pa">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="scanRotation" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="imageNumber">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="detector1">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector2">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector3">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="detector4">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector1">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector2">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector3">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="additionRatioOfDetector4">
+        <value>0</value>
+      </property>
+      <property xsi:type="longType" key="cumulativeNumber">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="specimenTemperature" formatString="0.00" units="℃" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="probeCurrent" formatString="0.00" units="A" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="gunVoltage" formatString="0.00" units="kV" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="biasVoltage" formatString="0.00" units="kV" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="columnMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="doubleType" key="monitorMagnification" formatString="0.00" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="liveFilterMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="tiltMagnificationCorrectionValue" formatString="0.00" units="degree" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="objectiveLensType">
+        <value>string</value>
+      </property>
+      <property xsi:type="stringType" key="gunType">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="dwellTime" units="ns">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast1">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast2">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast3">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="contrast4">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness1">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness2">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness3">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="brightness4">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="bedCompoSupress">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="bedShadowSupress">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="bedGainMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="bedShadowLevel">
+        <value>0</value>
+      </property>
+      <property xsi:type="floatType" key="probeNumberMp" formatString="0.00" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="stringType" key="probeCurrentModeMp">
+        <value>string</value>
+      </property>
+      <property xsi:type="floatType" key="beamShiftX" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="floatType" key="beamShiftY" formatString="0.00" units="mm" scaleFactor="1.00">
+        <value>0.00</value>
+      </property>
+      <property xsi:type="intType" key="dynamicFocus">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="stageDriveType">
+        <value>string</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveX" units="mm">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveY" units="mm">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveZ" units="mm">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveRotation" units="degree">
+        <value>0</value>
+      </property>
+      <property xsi:type="intType" key="stageDriveTilt" units="degree">
+        <value>0</value>
+      </property>
+      <property xsi:type="stringType" key="lowVacuumMode">
+        <value>string</value>
+      </property>
+      <property xsi:type="longType" key="fieldImageMagnification">
+        <value>0</value>
+      </property>
+      <placeRef id="placeRef_semResultConditionResult" ref="place_semResultConditionResult" />
+    </resultTemplate>
+  </protocol>
+  <data id="data_sem">
+    <uuid>ebda12ff-ec4d-4df0-881b-bd417f563de0</uuid>
+    <name>semData</name>
+    <description>SEM</description>
+    <annotation>Data for Scanning Electron Microscopy.</annotation>
+    <results id="results_semMeasurement">
+      <uuid>194a6140-ea9e-4768-9920-24620901bf90</uuid>
+      <name>semMeasurementResults</name>
+      <description>SEM Measurement</description>
+      <annotation>Measurement Results for Scanning Electron Microscopy.</annotation>
+      <material id="material_semMaterial" ref="materialTemplate_semMaterial">
+        <uuid>942687d2-d4ec-470f-8d28-81c92055a25e</uuid>
+        <name>semMaterialMaterial</name>
+        <description>SEM Material</description>
+        <annotation>Material Material for Scanning Electron Microscopy.</annotation>
+        <property xsi:type="stringType" key="SampleId">
+          <description>Sample ID</description>
+          <value>8fa67ebc-f9a6-4cfe-8433-ceee619a3943</value>
+        </property>
+        <property xsi:type="stringType" key="SampleName">
+          <description>Sample Name</description>
+          <value>AA231024</value>
+        </property>
+      </material>
+      <condition id="condition_semMeasurement" ref="conditionTemplate_semMeasurement">
+        <uuid>73cda61a-0fba-4442-9187-9c233fd77346</uuid>
+        <name>semMeasurementCondition</name>
+        <description>SEM Measurement Condition</description>
+        <annotation>Measurement Condition for Scanning Electron Microscopy.</annotation>
+        <property xsi:type="dateTimeType" key="dateTime" formatString="YYYY-MM-DDThh:mm:ss.sssTZD">
+          <description>Measurement Time</description>
+          <value>2023-10-25T13:22:00+09:00</value>
+        </property>
+        <property xsi:type="stringType" key="operator">
+          <description>Operator Name</description>
+          <value>JEOL</value>
+        </property>
+        <property xsi:type="stringType" key="instrument">
+          <description>Instrument Name</description>
+          <value>JSM-IT700HR</value>
+        </property>
+        <property xsi:type="intType" key="imageSizeX" units="pixel">
+          <description>Image Size X</description>
+          <value>1280</value>
+        </property>
+        <property xsi:type="intType" key="imageSizeY" units="pixel">
+          <description>Image Size Y</description>
+          <value>960</value>
+        </property>
+        <property xsi:type="stringType" key="colorMode">
+          <description>Color Mode</description>
+          <value>Gray Scale</value>
+        </property>
+        <property xsi:type="longType" key="magnification">
+          <description>Magnification</description>
+          <value>40000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionX" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position X</description>
+          <value>0.20000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionY" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position Y</description>
+          <value>20.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionZ" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position Z</description>
+          <value>10.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stageRotation" formatString="0.00000" units="degree" scaleFactor="1.00000">
+          <description>Stage Rotation</description>
+          <value>0.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stageTilt" formatString="0.00000" units="degree" scaleFactor="1.00000">
+          <description>Stage Tilt</description>
+          <value>0.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionFineZ" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position Fine Z</description>
+          <value>0.00000</value>
+        </property>
+        <property xsi:type="longType" key="contrast">
+          <description>Contrast</description>
+          <value>1736</value>
+        </property>
+        <property xsi:type="longType" key="brightness">
+          <description>Brightness</description>
+          <value>1743</value>
+        </property>
+        <property xsi:type="floatType" key="acceleratingVoltage" formatString="0.0" units="kV" scaleFactor="1.0">
+          <description>Accelerating Voltage</description>
+          <value>10.0</value>
+        </property>
+        <property xsi:type="stringType" key="comment">
+          <description>Comment</description>
+          <value />
+        </property>
+        <property xsi:type="stringType" key="label">
+          <description>Label</description>
+          <value />
+        </property>
+        <property xsi:type="floatType" key="fieldOfViewX" formatString="0.000" units="um" scaleFactor="1.000">
+          <description>Field of view X</description>
+          <value>3.200</value>
+        </property>
+        <property xsi:type="floatType" key="fieldOfViewY" formatString="0.000" units="um" scaleFactor="1.000">
+          <description>Field of view Y</description>
+          <value>2.400</value>
+        </property>
+        <property xsi:type="intType" key="numberOfImagesX">
+          <description>Number of images X</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="numberOfImagesY">
+          <description>Number of images Y</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="doubleType" key="pixelSize" formatString="0.00" units="nm" scaleFactor="1.00">
+          <description>Pixel Size</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="doubleType" key="standardFieldSizeX" formatString="0.00" units="mm" scaleFactor="1.00">
+          <description>Standard Field Size X</description>
+          <value>128.00</value>
+        </property>
+        <property xsi:type="doubleType" key="standardFieldSizeY" formatString="0.00" units="mm" scaleFactor="1.00">
+          <description>Standard Field Size Y</description>
+          <value>96.00</value>
+        </property>
+        <property xsi:type="intType" key="pnuHeight" units="pixel">
+          <description>Photo Data Height</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="pnuType">
+          <description>Photo Data Type</description>
+          <value>Off</value>
+        </property>
+        <property xsi:type="stringType" key="nickname">
+          <description>Nickname of Instrument</description>
+          <value>IT700HR</value>
+        </property>
+        <property xsi:type="stringType" key="detector">
+          <description>Detector</description>
+          <value>SED</value>
+        </property>
+        <property xsi:type="floatType" key="workingDistance" formatString="0.0" units="mm" scaleFactor="1.0">
+          <description>Working Distance</description>
+          <value>10.0</value>
+        </property>
+        <property xsi:type="floatType" key="scanTime" formatString="0.00" units="sec" scaleFactor="1.00">
+          <description>Scan Time/frame</description>
+          <value>10.00</value>
+        </property>
+        <property xsi:type="stringType" key="scanType">
+          <description>Scan Type</description>
+          <value>Normal</value>
+        </property>
+        <property xsi:type="stringType" key="vacuumMode">
+          <description>Vacuum Mode</description>
+          <value>High Vacuum</value>
+        </property>
+        <property xsi:type="intType" key="vacuum" units="Pa">
+          <description>Degree of vacuum</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="floatType" key="scanRotation" formatString="0.00" units="degree" scaleFactor="1.00">
+          <description>Scan Rotation</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="intType" key="imageNumber">
+          <description>Image number</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="detector1">
+          <description>Detector 1</description>
+          <value>SED</value>
+        </property>
+        <property xsi:type="stringType" key="detector2">
+          <description>Detector 2</description>
+          <value />
+        </property>
+        <property xsi:type="stringType" key="detector3">
+          <description>Detector 3</description>
+          <value />
+        </property>
+        <property xsi:type="stringType" key="detector4">
+          <description>Detector 4</description>
+          <value />
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector1">
+          <description>Addition ratio of detector 1</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector2">
+          <description>Addition ratio of detector 2</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector3">
+          <description>Addition ratio of detector 3</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector4">
+          <description>Addition ratio of detector 4</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="longType" key="cumulativeNumber">
+          <description>Cumulative Number</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="floatType" key="specimenTemperature" formatString="0.00" units="℃" scaleFactor="1.00">
+          <description>Specimen Temperature</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="floatType" key="probeCurrent" formatString="0.00" units="A" scaleFactor="1.00">
+          <description>Probe Current</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="floatType" key="gunVoltage" formatString="0.0" units="kV" scaleFactor="1.0">
+          <description>Gun Voltage</description>
+          <value>10.0</value>
+        </property>
+        <property xsi:type="floatType" key="biasVoltage" formatString="0.0" units="kV" scaleFactor="1.0">
+          <description>Bias Voltage</description>
+          <value>0.0</value>
+        </property>
+        <property xsi:type="stringType" key="columnMode">
+          <description>Culumn Mode</description>
+          <value>Normal</value>
+        </property>
+        <property xsi:type="doubleType" key="monitorMagnification" formatString="0.00" scaleFactor="1.00">
+          <description>Monitor Magnification</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="stringType" key="liveFilterMode">
+          <description>Live Filter Mode</description>
+          <value>None</value>
+        </property>
+        <property xsi:type="floatType" key="tiltMagnificationCorrectionValue" formatString="0.00" units="degree" scaleFactor="1.00">
+          <description>Tilt magnification correction value</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="stringType" key="objectiveLensType">
+          <description>Objective Lens Type</description>
+          <value>None</value>
+        </property>
+        <property xsi:type="stringType" key="gunType">
+          <description>Gun Type</description>
+          <value>Field emission</value>
+        </property>
+        <property xsi:type="intType" key="dwellTime" units="ns">
+          <description>Dwell Time</description>
+          <value>6400</value>
+        </property>
+        <property xsi:type="intType" key="contrast1">
+          <description>Contrast of Channel 1</description>
+          <value>1736</value>
+        </property>
+        <property xsi:type="intType" key="contrast2">
+          <description>Contrast of Channel 2</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="contrast3">
+          <description>Contrast of Channel 3</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="contrast4">
+          <description>Contrast of Channel 4</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="brightness1">
+          <description>Brightness of Channel 1</description>
+          <value>1743</value>
+        </property>
+        <property xsi:type="intType" key="brightness2">
+          <description>Brightness of Channel 2</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="brightness3">
+          <description>Brightness of Channel 3</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="brightness4">
+          <description>Brightness of Channel 4</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="bedCompoSupress">
+          <description>BED Compo Suppress</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="bedShadowSupress">
+          <description>BED Shadow Suppress</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="bedGainMode">
+          <description>BED Gain Mode</description>
+          <value />
+        </property>
+        <property xsi:type="intType" key="bedShadowLevel">
+          <description>BED Shadow Level</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="floatType" key="probeNumberMp" formatString="0.0" scaleFactor="1.0">
+          <description>Probe Number(MP)</description>
+          <value>60.0</value>
+        </property>
+        <property xsi:type="stringType" key="probeCurrentModeMp">
+          <description>Probe Current Mode(MP)</description>
+          <value>Normal</value>
+        </property>
+        <property xsi:type="floatType" key="beamShiftX" formatString="0.0000000000000000" units="mm" scaleFactor="1.0000000000000000">
+          <description>Beam Shift X</description>
+          <value>-0.0499500000000000</value>
+        </property>
+        <property xsi:type="floatType" key="beamShiftY" formatString="0.0000000000000000" units="mm" scaleFactor="1.0000000000000000">
+          <description>Beam Shift Y</description>
+          <value>0.0499500000000000</value>
+        </property>
+        <property xsi:type="intType" key="dynamicFocus">
+          <description>Dynamic Focus</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="stageDriveType">
+          <description>Stage Drive Type</description>
+          <value>Motor</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveX" units="mm">
+          <description>Stage Drive X</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveY" units="mm">
+          <description>Stage Drive Y</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveZ" units="mm">
+          <description>Stage Drive Z</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveRotation" units="degree">
+          <description>Stage Drive Rotation</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveTilt" units="degree">
+          <description>Stage Drive Tilt</description>
+          <value>2</value>
+        </property>
+        <property xsi:type="stringType" key="lowVacuumMode">
+          <description>Low Vacuum Mode</description>
+          <value>None</value>
+        </property>
+        <property xsi:type="longType" key="fieldImageMagnification">
+          <description>Image Magnification of a Field of view</description>
+          <value>40000</value>
+        </property>
+      </condition>
+      <result id="result_semResultImage" ref="resultTemplate_semResultImage">
+        <uuid>8f45889b-6966-4e62-8fe8-91ee3c5c9406</uuid>
+        <insertion>
+          <uri>./sem_20231025132200.bmp</uri>
+          <hash method="SHA-256">1254262B7C9AB2AC94BEFA9BF57996AFEF55DD94D00971BFF03010F7DDCA0B0E</hash>
+        </insertion>
+        <name>semResultImageResult</name>
+        <description>SEM Result Image</description>
+        <annotation>Result Image Result for Scanning Electron Microscopy.</annotation>
+      </result>
+      <result id="result_semResultCondition" ref="resultTemplate_semResultCondition">
+        <uuid>29cc69f7-8bec-45ab-b34a-721fe9199a1d</uuid>
+        <insertion>
+          <uri>./sem_20231025132200.txt</uri>
+          <hash method="SHA-256">56080AC6D792861FA4EE3B28A39827474BBB9452ECA47C6410E0D6F0C999FD6A</hash>
+        </insertion>
+        <name>semResultConditionResult</name>
+        <description>SEM Result Condition</description>
+        <annotation>Result Condition Result for Scanning Electron Microscopy.</annotation>
+        <property xsi:type="dateTimeType" key="dateTime" formatString="YYYY-MM-DDThh:mm:ss.sssTZD">
+          <description>Measurement Time</description>
+          <value>2023-10-25T13:22:00+09:00</value>
+        </property>
+        <property xsi:type="stringType" key="operator">
+          <description>Operator Name</description>
+          <value>JEOL</value>
+        </property>
+        <property xsi:type="stringType" key="instrument">
+          <description>Instrument Name</description>
+          <value>JSM-IT700HR</value>
+        </property>
+        <property xsi:type="intType" key="imageSizeX" units="pixel">
+          <description>Image Size X</description>
+          <value>1280</value>
+        </property>
+        <property xsi:type="intType" key="imageSizeY" units="pixel">
+          <description>Image Size Y</description>
+          <value>960</value>
+        </property>
+        <property xsi:type="stringType" key="colorMode">
+          <description>Color Mode</description>
+          <value>Gray Scale</value>
+        </property>
+        <property xsi:type="longType" key="magnification">
+          <description>Magnification</description>
+          <value>40000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionX" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position X</description>
+          <value>0.20000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionY" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position Y</description>
+          <value>20.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionZ" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position Z</description>
+          <value>10.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stageRotation" formatString="0.00000" units="degree" scaleFactor="1.00000">
+          <description>Stage Rotation</description>
+          <value>0.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stageTilt" formatString="0.00000" units="degree" scaleFactor="1.00000">
+          <description>Stage Tilt</description>
+          <value>0.00000</value>
+        </property>
+        <property xsi:type="floatType" key="stagePositionFineZ" formatString="0.00000" units="mm" scaleFactor="1.00000">
+          <description>Stage Position Fine Z</description>
+          <value>0.00000</value>
+        </property>
+        <property xsi:type="longType" key="contrast">
+          <description>Contrast</description>
+          <value>1736</value>
+        </property>
+        <property xsi:type="longType" key="brightness">
+          <description>Brightness</description>
+          <value>1743</value>
+        </property>
+        <property xsi:type="floatType" key="acceleratingVoltage" formatString="0.0" units="kV" scaleFactor="1.0">
+          <description>Accelerating Voltage</description>
+          <value>10.0</value>
+        </property>
+        <property xsi:type="stringType" key="comment">
+          <description>Comment</description>
+          <value />
+        </property>
+        <property xsi:type="stringType" key="label">
+          <description>Label</description>
+          <value />
+        </property>
+        <property xsi:type="floatType" key="fieldOfViewX" formatString="0.000" units="um" scaleFactor="1.000">
+          <description>Field of view X</description>
+          <value>3.200</value>
+        </property>
+        <property xsi:type="floatType" key="fieldOfViewY" formatString="0.000" units="um" scaleFactor="1.000">
+          <description>Field of view Y</description>
+          <value>2.400</value>
+        </property>
+        <property xsi:type="intType" key="numberOfImagesX">
+          <description>Number of images X</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="numberOfImagesY">
+          <description>Number of images Y</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="doubleType" key="pixelSize" formatString="0.00" units="nm" scaleFactor="1.00">
+          <description>Pixel Size</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="doubleType" key="pixelLength" formatString="0.0000" units="um/pixel" scaleFactor="1.0000">
+          <description>Pixel Length</description>
+          <value>0.0025</value>
+        </property>
+        <property xsi:type="doubleType" key="standardFieldSizeX" formatString="0.00" units="mm" scaleFactor="1.00">
+          <description>Standard Field Size X</description>
+          <value>128.00</value>
+        </property>
+        <property xsi:type="doubleType" key="standardFieldSizeY" formatString="0.00" units="mm" scaleFactor="1.00">
+          <description>Standard Field Size Y</description>
+          <value>96.00</value>
+        </property>
+        <property xsi:type="intType" key="pnuHeight" units="pixel">
+          <description>Photo Data Height</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="pnuType">
+          <description>Photo Data Type</description>
+          <value>Off</value>
+        </property>
+        <property xsi:type="stringType" key="nickname">
+          <description>Nickname of Instrument</description>
+          <value>IT700HR</value>
+        </property>
+        <property xsi:type="stringType" key="detector">
+          <description>Detector</description>
+          <value>SED</value>
+        </property>
+        <property xsi:type="floatType" key="workingDistance" formatString="0.0" units="mm" scaleFactor="1.0">
+          <description>Working Distance</description>
+          <value>10.0</value>
+        </property>
+        <property xsi:type="floatType" key="scanTime" formatString="0.00" units="sec" scaleFactor="1.00">
+          <description>Scan Time/frame</description>
+          <value>10.00</value>
+        </property>
+        <property xsi:type="stringType" key="scanType">
+          <description>Scan Type</description>
+          <value>Normal</value>
+        </property>
+        <property xsi:type="stringType" key="vacuumMode">
+          <description>Vacuum Mode</description>
+          <value>High Vacuum</value>
+        </property>
+        <property xsi:type="intType" key="vacuum" units="Pa">
+          <description>Degree of vacuum</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="floatType" key="scanRotation" formatString="0.00" units="degree" scaleFactor="1.00">
+          <description>Scan Rotation</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="intType" key="imageNumber">
+          <description>Image number</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="detector1">
+          <description>Detector 1</description>
+          <value>SED</value>
+        </property>
+        <property xsi:type="stringType" key="detector2">
+          <description>Detector 2</description>
+          <value />
+        </property>
+        <property xsi:type="stringType" key="detector3">
+          <description>Detector 3</description>
+          <value />
+        </property>
+        <property xsi:type="stringType" key="detector4">
+          <description>Detector 4</description>
+          <value />
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector1">
+          <description>Addition ratio of detector 1</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector2">
+          <description>Addition ratio of detector 2</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector3">
+          <description>Addition ratio of detector 3</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="additionRatioOfDetector4">
+          <description>Addition ratio of detector 4</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="longType" key="cumulativeNumber">
+          <description>Cumulative Number</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="floatType" key="specimenTemperature" formatString="0.00" units="℃" scaleFactor="1.00">
+          <description>Specimen Temperature</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="floatType" key="probeCurrent" formatString="0.00" units="A" scaleFactor="1.00">
+          <description>Probe Current</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="floatType" key="gunVoltage" formatString="0.0" units="kV" scaleFactor="1.0">
+          <description>Gun Voltage</description>
+          <value>10.0</value>
+        </property>
+        <property xsi:type="floatType" key="biasVoltage" formatString="0.0" units="kV" scaleFactor="1.0">
+          <description>Bias Voltage</description>
+          <value>0.0</value>
+        </property>
+        <property xsi:type="stringType" key="columnMode">
+          <description>Culumn Mode</description>
+          <value>Normal</value>
+        </property>
+        <property xsi:type="doubleType" key="monitorMagnification" formatString="0.00" scaleFactor="1.00">
+          <description>Monitor Magnification</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="stringType" key="liveFilterMode">
+          <description>Live Filter Mode</description>
+          <value>None</value>
+        </property>
+        <property xsi:type="floatType" key="tiltMagnificationCorrectionValue" formatString="0.00" units="degree" scaleFactor="1.00">
+          <description>Tilt magnification correction value</description>
+          <value>0.00</value>
+        </property>
+        <property xsi:type="stringType" key="objectiveLensType">
+          <description>Objective Lens Type</description>
+          <value>None</value>
+        </property>
+        <property xsi:type="stringType" key="gunType">
+          <description>Gun Type</description>
+          <value>Field emission</value>
+        </property>
+        <property xsi:type="intType" key="dwellTime" units="ns">
+          <description>Dwell Time</description>
+          <value>6400</value>
+        </property>
+        <property xsi:type="intType" key="contrast1">
+          <description>Contrast of Channel 1</description>
+          <value>1736</value>
+        </property>
+        <property xsi:type="intType" key="contrast2">
+          <description>Contrast of Channel 2</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="contrast3">
+          <description>Contrast of Channel 3</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="contrast4">
+          <description>Contrast of Channel 4</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="brightness1">
+          <description>Brightness of Channel 1</description>
+          <value>1729</value>
+        </property>
+        <property xsi:type="intType" key="brightness2">
+          <description>Brightness of Channel 2</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="brightness3">
+          <description>Brightness of Channel 3</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="brightness4">
+          <description>Brightness of Channel 4</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="bedCompoSupress">
+          <description>BED Compo Suppress</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="intType" key="bedShadowSupress">
+          <description>BED Shadow Suppress</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="bedGainMode">
+          <description>BED Gain Mode</description>
+          <value />
+        </property>
+        <property xsi:type="intType" key="bedShadowLevel">
+          <description>BED Shadow Level</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="floatType" key="probeNumberMp" formatString="0.0" scaleFactor="1.0">
+          <description>Probe Number(MP)</description>
+          <value>60.0</value>
+        </property>
+        <property xsi:type="stringType" key="probeCurrentModeMp">
+          <description>Probe Current Mode(MP)</description>
+          <value>Normal</value>
+        </property>
+        <property xsi:type="floatType" key="beamShiftX" formatString="0.0000000000000000" units="mm" scaleFactor="1.0000000000000000">
+          <description>Beam Shift X</description>
+          <value>-0.0499500000000000</value>
+        </property>
+        <property xsi:type="floatType" key="beamShiftY" formatString="0.0000000000000000" units="mm" scaleFactor="1.0000000000000000">
+          <description>Beam Shift Y</description>
+          <value>0.0499500000000000</value>
+        </property>
+        <property xsi:type="intType" key="dynamicFocus">
+          <description>Dynamic Focus</description>
+          <value>0</value>
+        </property>
+        <property xsi:type="stringType" key="stageDriveType">
+          <description>Stage Drive Type</description>
+          <value>Motor</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveX" units="mm">
+          <description>Stage Drive X</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveY" units="mm">
+          <description>Stage Drive Y</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveZ" units="mm">
+          <description>Stage Drive Z</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveRotation" units="degree">
+          <description>Stage Drive Rotation</description>
+          <value>1</value>
+        </property>
+        <property xsi:type="intType" key="stageDriveTilt" units="degree">
+          <description>Stage Drive Tilt</description>
+          <value>2</value>
+        </property>
+        <property xsi:type="stringType" key="lowVacuumMode">
+          <description>Low Vacuum Mode</description>
+          <value>None</value>
+        </property>
+        <property xsi:type="longType" key="fieldImageMagnification">
+          <description>Image Magnification of a Field of view</description>
+          <value>40000</value>
+        </property>
+      </result>
+    </results>
+  </data>
+  <eventLog id="eventLog_sem">
+    <uuid>b04c7326-5ad0-4bc5-b544-9e5f228bac96</uuid>
+    <name>semEventLog</name>
+    <description>SEM</description>
+    <annotation>EventLog for Scanning Electron Microscopy.</annotation>
+    <log id="log_sem" ref="method_semMeasurement">
+      <uuid>2ddaabd1-f004-4f77-a8c1-39a8d0ba1399</uuid>
+      <name>semLog</name>
+      <description>SEM</description>
+      <annotation>Log for Scanning Electron Microscopy.</annotation>
+      <trace id="trace_semMeasurement" ref="program_semMeasurement">
+        <uuid>9c346d0d-df09-42ea-8ba6-5bd61d54e4c3</uuid>
+        <name>semMeasurementTrace</name>
+        <description>SEM Measurement</description>
+        <annotation>Measurement Trace for Scanning Electron Microscopy.</annotation>
+        <event id="event_semMeasurement" ref="instruction_semMeasurement">
+          <uuid>ed2e62bb-18af-4773-8d2e-ea3f1026d9c1</uuid>
+          <name>semMeasurementEvent</name>
+          <description>SEM Measurement</description>
+          <annotation>Measurement Event for Scanning Electron Microscopy.</annotation>
+          <property xsi:type="dateTimeType" key="time:timestamp" formatString="YYYY-MM-DDThh:mm:ss.sssTZD">
+            <description>SEM Measurement DateTime</description>
+            <value>2023-10-25T13:22:00+09:00</value>
+          </property>
+          <property xsi:type="stringType" key="lifecycle:transition">
+            <description>SEM Measurement</description>
+            <value>complete</value>
+          </property>
+          <property xsi:type="uuidType" key="concept:instance">
+            <description>SEM Result Image</description>
+            <value>8f45889b-6966-4e62-8fe8-91ee3c5c9406</value>
+          </property>
+          <property xsi:type="uuidType" key="concept:instance">
+            <description>SEM Result Condition</description>
+            <value>29cc69f7-8bec-45ab-b34a-721fe9199a1d</value>
+          </property>
+        </event>
+      </trace>
+    </log>
+  </eventLog>
+</maiml>
