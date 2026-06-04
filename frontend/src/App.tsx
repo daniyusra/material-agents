@@ -3,6 +3,7 @@ import Layout from "./layouts/Layout";
 import LandingPage from "./pages/LandingPage";
 import ResearchPage from "./pages/ResearchPage";
 import AboutPage from "./pages/AboutPage";
+import WhatsAppPage from "./pages/WhatsAppPage";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<LandingPage />} />
           <Route path="research" element={<ResearchPage />} />
+          <Route path="whatsapp" element={<WhatsAppPage />} />
           <Route path="about" element={<AboutPage />} />
         </Route>
       </Routes>

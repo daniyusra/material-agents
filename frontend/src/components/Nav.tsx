@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 const NAV_LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/research", label: "Research Terminal", end: false },
+  { to: "/whatsapp", label: "WhatsApp Bot", end: false },
   { to: "/about", label: "About", end: false },
 ];
 

@@ -22,6 +22,9 @@ from .agents.chat import stream_chat
 from .agents.data_agent import ChartEvent
 from .logging_config import configure_logging, configure_sentry
 from .storage import cleanup_loop, get_record, rebuild_registry, store_file
+from .whatsapp import db as wa_db
+from .whatsapp.router import router as whatsapp_router
+from .whatsapp.scheduler import setup_scheduler
 
 # ── Observability ─────────────────────────────────────────────────────────────
 
@@ -50,10 +53,14 @@ limiter = Limiter(key_func=get_remote_address, enabled=_limiter_enabled)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     count = rebuild_registry()
+    wa_db.init_db()
     log.info("startup_complete", extra={"restored_files": count})
     task = asyncio.create_task(cleanup_loop())
+    _scheduler = setup_scheduler()
+    _scheduler.start()
     yield
     task.cancel()
+    _scheduler.shutdown(wait=False)
     log.info("shutdown_complete")
 
 
@@ -67,6 +74,8 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+app.include_router(whatsapp_router)
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

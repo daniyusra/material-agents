@@ -32,3 +32,41 @@ export interface ApiKeys {
   anthropic?: string;
   openai?: string;
 }
+
+// ── WhatsApp bot types ────────────────────────────────────────────────────────
+
+export interface WaGroup {
+  group_jid: string;
+  message_count: number;
+  last_activity: number;
+}
+
+export interface WaTodo {
+  id: number;
+  text: string;
+  owner: string | null;
+  group_jid: string;
+  created_at: number;
+  done: number;
+}
+
+export interface WaGoal {
+  id: number;
+  title: string;
+  description: string | null;
+  group_jid: string;
+  created_at: number;
+  target_date: number | null;
+  done: number;
+  created_by: string | null;
+}
+
+export interface WaReminder {
+  id: number;
+  text: string;
+  group_jid: string;
+  due_at: number;
+  sent: number;
+  created_by: string | null;
+  created_at: number;
+}
