@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
+const WHATSAPP_ENABLED = import.meta.env.VITE_WHATSAPP_ENABLED === "true";
+
 const NAV_LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/research", label: "Research Terminal", end: false },
-  { to: "/whatsapp", label: "WhatsApp Bot", end: false },
+  ...(WHATSAPP_ENABLED ? [{ to: "/whatsapp", label: "WhatsApp Bot", end: false }] : []),
   { to: "/about", label: "About", end: false },
 ];
 

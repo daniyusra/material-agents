@@ -183,123 +183,63 @@ All data is stored in a local SQLite file (`backend/whatsapp.db`). No external d
 
 ---
 
-## Production deployment
+## Running persistently on a local machine (WSL2)
 
-### Prerequisites
+The bot is designed to run on a single PC. Evolution API auto-restarts via Docker; the backend needs a one-time systemd unit so it survives reboots without manual intervention.
 
-- [flyctl](https://fly.io/docs/hands-on/install-flyctl/) installed and authenticated (`fly auth login`)
-- A server (VPS, Hetzner, DigitalOcean, etc.) to run Evolution API — it needs a stable public IP
+### Evolution API (Docker) — already persistent
 
----
+`restart: unless-stopped` in `docker-compose.yml` means containers come back automatically when Docker Desktop starts. Enable **"Start Docker Desktop when you log in"** in Docker Desktop settings and Evolution API will always be up.
 
-### Step 1 — Deploy the backend to Fly.io
+Data (WhatsApp session, todos, goals, reminders) lives in the `evolution_postgres` Docker volume — survives reboots. Never run `docker compose down -v`; that deletes the volume and forces a QR re-scan.
 
-```bash
-cd backend
+### Backend — auto-start via systemd
 
-# First time only: create the app and its persistent volume
-fly apps create material-agents-backend
-fly volumes create data --region nrt --size 1   # 1 GB; adjust region if needed
-
-# Set all secrets (never committed to git)
-fly secrets set \
-  ANTHROPIC_API_KEY=sk-ant-... \
-  OPENAI_API_KEY=sk-proj-... \
-  EVOLUTION_API_URL=https://<your-evolution-server>:8080 \
-  EVOLUTION_INSTANCE=mybot \
-  EVOLUTION_API_KEY=<your-evolution-api-key> \
-  WHATSAPP_WEBHOOK_SECRET=<random-string-you-choose>
-
-# Deploy
-fly deploy
-```
-
-The `fly.toml` already has:
-- `UPLOAD_DIR=/data/uploads` and `WHATSAPP_DB_PATH=/data/whatsapp.db` — both on the persistent volume
-- `min_machines_running = 1` — keeps the process alive for APScheduler (reminders, weekly recap)
-- Health check at `/health`
-
-Your backend will be live at `https://material-agents-backend.fly.dev`.
-
----
-
-### Step 2 — Deploy Evolution API on your server
-
-Copy `docker-compose.yml` to your server and run it there. Change `AUTHENTICATION_API_KEY` to a strong secret:
+WSL2 supports systemd. Create a service so the backend starts on boot:
 
 ```bash
-scp docker-compose.yml user@your-server:~/evolution/
-ssh user@your-server
-cd ~/evolution
-
-# Edit AUTHENTICATION_API_KEY in docker-compose.yml, then:
-docker compose up -d
+sudo nano /etc/systemd/system/material-agents.service
 ```
 
-Expose port 8080 (or put nginx in front). The Evolution API will be reachable at `https://<your-server>:8080` or your domain.
+Paste:
 
----
+```ini
+[Unit]
+Description=material-agents backend
+After=network.target
 
-### Step 3 — Connect WhatsApp on the production server
+[Service]
+Type=simple
+User=daniyusra
+WorkingDirectory=/home/daniyusra/projects/manantara-playground/material-agents/backend
+ExecStart=/home/daniyusra/.local/bin/uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
 
-Run these against your production Evolution API URL:
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
 
 ```bash
-EVOURL=https://<your-evolution-server>:8080
-APIKEY=<your-evolution-api-key>
+sudo systemctl daemon-reload
+sudo systemctl enable material-agents
+sudo systemctl start material-agents
 
-# Create instance
-curl -s -X POST $EVOURL/instance/create \
-  -H "apikey: $APIKEY" \
-  -H "Content-Type: application/json" \
-  -d '{"instanceName": "mybot", "integration": "WHATSAPP-BAILEYS", "qrcode": true}' \
-  | python3 -m json.tool
-
-# Scan QR with WhatsApp → Linked Devices → Link a device
-curl -s $EVOURL/instance/connect/mybot -H "apikey: $APIKEY" | python3 -m json.tool
-
-# Confirm connected
-curl -s $EVOURL/instance/connectionState/mybot -H "apikey: $APIKEY"
+# Check it's running
+sudo systemctl status material-agents
 ```
 
----
-
-### Step 4 — Point the webhook at your Fly backend
+Logs:
 
 ```bash
-curl -s -X POST $EVOURL/webhook/set/mybot \
-  -H "apikey: $APIKEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "webhook": {
-      "enabled": true,
-      "url": "https://material-agents-backend.fly.dev/whatsapp/webhook",
-      "events": ["MESSAGES_UPSERT"],
-      "headers": {
-        "x-webhook-secret": "<same-WHATSAPP_WEBHOOK_SECRET-you-set-above>"
-      }
-    }
-  }'
+journalctl -u material-agents -f
 ```
 
----
+### After a reboot — checklist
 
-### Step 5 — Deploy the frontend to Vercel
-
-In Vercel dashboard: import the repo, set root directory to `frontend`, and add this environment variable:
-
-```
-VITE_API_BASE_URL=https://material-agents-backend.fly.dev
-```
-
-Then deploy. The frontend will proxy API calls to your Fly backend.
-
----
-
-### Subsequent deploys
-
-```bash
-cd backend && fly deploy
-```
-
-That's it — secrets and volumes persist across deploys.
+1. Docker Desktop starts automatically → Evolution API is up
+2. `material-agents` systemd service starts automatically → backend is up
+3. WhatsApp session reconnects automatically (no re-scan)
+4. Start the frontend manually only when you need the dashboard: `cd frontend && npm run dev`
