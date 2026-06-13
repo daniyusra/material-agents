@@ -7,14 +7,12 @@ primary_region = 'nrt'
 [env]
   PORT = '8080'
   UPLOAD_DIR = '/data/uploads'
-  WHATSAPP_DB_PATH = '/data/whatsapp.db'
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 1   # keep alive for APScheduler (reminders, weekly recap)
 
   [http_service.concurrency]
     type = 'requests'
@@ -34,6 +32,6 @@ primary_region = 'nrt'
   cpus = 1
 
 [[mounts]]
-  source = 'data'
+  source = 'uploads_data'
   destination = '/data'
   initial_size = '1gb'
