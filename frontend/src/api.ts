@@ -1,5 +1,5 @@
 import { createParser } from "eventsource-parser";
-import type { FileInfo, Message, PlotlyFigure, Provider } from "./types";
+import type { FileInfo, Message, PlotlyFigure, Provider, WaGoal, WaGroup, WaReminder, WaTodo } from "./types";
 
 // In production, set VITE_API_BASE_URL to the backend origin (e.g. https://material-agents-backend.fly.dev).
 // In local dev it's empty, so the Vite proxy handles /api/* requests.
@@ -71,3 +71,63 @@ export async function streamChat(
     })();
   });
 }
+
+// ── WhatsApp bot API ──────────────────────────────────────────────────────────
+
+async function _json<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, init);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export const waApi = {
+  groups: () => _json<WaGroup[]>("/api/whatsapp/groups"),
+
+  todos: (groupJid: string, done?: boolean) => {
+    const params = new URLSearchParams({ group_jid: groupJid });
+    if (done !== undefined) params.set("done", String(done));
+    return _json<WaTodo[]>(`/api/whatsapp/todos?${params}`);
+  },
+
+  createTodo: (group_jid: string, text: string, owner?: string) =>
+    _json<WaTodo>("/api/whatsapp/todos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ group_jid, text, owner: owner ?? null }),
+    }),
+
+  completeTodo: (id: number) =>
+    _json<{ status: string }>(`/api/whatsapp/todos/${id}/done`, { method: "POST" }),
+
+  goals: (groupJid: string, done?: boolean) => {
+    const params = new URLSearchParams({ group_jid: groupJid });
+    if (done !== undefined) params.set("done", String(done));
+    return _json<WaGoal[]>(`/api/whatsapp/goals?${params}`);
+  },
+
+  createGoal: (group_jid: string, title: string) =>
+    _json<WaGoal>("/api/whatsapp/goals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ group_jid, title }),
+    }),
+
+  completeGoal: (id: number) =>
+    _json<{ status: string }>(`/api/whatsapp/goals/${id}/done`, { method: "POST" }),
+
+  reminders: (groupJid: string, sent?: boolean) => {
+    const params = new URLSearchParams({ group_jid: groupJid });
+    if (sent !== undefined) params.set("sent", String(sent));
+    return _json<WaReminder[]>(`/api/whatsapp/reminders?${params}`);
+  },
+
+  recap: (group_jid: string) =>
+    _json<{ recap: string }>("/api/whatsapp/recap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ group_jid }),
+    }),
+};

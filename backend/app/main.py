@@ -22,6 +22,9 @@ from .agents.chat import stream_chat
 from .agents.data_agent import ChartEvent
 from .logging_config import configure_logging, configure_sentry
 from .storage import cleanup_loop, get_record, rebuild_registry, store_file
+from .whatsapp import db as wa_db
+from .whatsapp.router import router as whatsapp_router
+from .whatsapp.scheduler import setup_scheduler
 
 # ── Observability ─────────────────────────────────────────────────────────────
 
@@ -32,6 +35,7 @@ log = logging.getLogger(__name__)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
+_WHATSAPP_ENABLED = os.getenv("WHATSAPP_ENABLED", "false").lower() == "true"
 _ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")]
 _MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "10"))
 _MAX_MESSAGES = int(os.getenv("MAX_MESSAGES", "50"))
@@ -50,10 +54,18 @@ limiter = Limiter(key_func=get_remote_address, enabled=_limiter_enabled)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     count = rebuild_registry()
-    log.info("startup_complete", extra={"restored_files": count})
+    if _WHATSAPP_ENABLED:
+        wa_db.init_db()
+    log.info("startup_complete", extra={"restored_files": count, "whatsapp_enabled": _WHATSAPP_ENABLED})
     task = asyncio.create_task(cleanup_loop())
+    _scheduler = None
+    if _WHATSAPP_ENABLED:
+        _scheduler = setup_scheduler()
+        _scheduler.start()
     yield
     task.cancel()
+    if _scheduler:
+        _scheduler.shutdown(wait=False)
     log.info("shutdown_complete")
 
 
@@ -67,6 +79,9 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+if _WHATSAPP_ENABLED:
+    app.include_router(whatsapp_router)
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

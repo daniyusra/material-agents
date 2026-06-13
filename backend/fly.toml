@@ -1,8 +1,3 @@
-# fly.toml app configuration file generated for material-agents-backend on 2026-05-07T23:22:27+09:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
 app = 'material-agents-backend'
 primary_region = 'nrt'
 
@@ -11,33 +6,25 @@ primary_region = 'nrt'
 
 [env]
   PORT = '8080'
+  UPLOAD_DIR = '/data/uploads'
+  WHATSAPP_DB_PATH = '/data/whatsapp.db'
 
-[[mounts]]
-  source = 'uploads_data'
-  destination = '/data'
-
-[[services]]
-  protocol = 'tcp'
+[http_service]
   internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1   # keep alive for APScheduler (reminders, weekly recap)
 
-  [[services.ports]]
-    port = 80
-    handlers = ['http']
-    force_https = true
-
-  [[services.ports]]
-    port = 443
-    handlers = ['tls', 'http']
-
-  [services.concurrency]
+  [http_service.concurrency]
     type = 'requests'
     hard_limit = 50
     soft_limit = 40
 
-  [[services.http_checks]]
+  [[http_service.checks]]
     interval = '10s'
     timeout = '2s'
-    grace_period = '5s'
+    grace_period = '10s'
     method = 'GET'
     path = '/health'
 
@@ -45,4 +32,8 @@ primary_region = 'nrt'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 1024
+
+[[mounts]]
+  source = 'data'
+  destination = '/data'
+  initial_size = '1gb'

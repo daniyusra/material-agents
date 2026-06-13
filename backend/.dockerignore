@@ -1,7 +1,9 @@
-# flyctl launch added from .pytest_cache/.gitignore
-# Created by pytest automatically.
-.pytest_cache/**/*
-
-# flyctl launch added from .venv/.gitignore
-.venv/**/*
+.venv/
+.pytest_cache/
+tests/
+uploads/
+__pycache__/
+*.pyc
+.env
+whatsapp.db
 fly.toml
