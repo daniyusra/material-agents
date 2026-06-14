@@ -213,3 +213,4 @@ frontend/node_modules
 backend/uploads/*
 !backend/uploads/.gitkeep
 backend/whatsapp.db
+backend/media/

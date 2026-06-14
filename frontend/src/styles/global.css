@@ -42,6 +42,178 @@
   ::-webkit-scrollbar-thumb:hover { background: #405060; }
 }
 
+/* ── Blog prose styles ───────────────────────────────────────────────────────
+   Applied to the rendered article body via className="prose".
+   Scoped here so they don't bleed into the rest of the app.               */
+.prose {
+  color: #c8d8e8;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  max-width: 70ch;
+}
+.prose h1,.prose h2,.prose h3,.prose h4,.prose h5,.prose h6 {
+  font-family: 'Syne', system-ui, sans-serif;
+  font-weight: 700;
+  color: #e8f0f8;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+.prose h1 { font-size: 2rem; }
+.prose h2 { font-size: 1.5rem; border-bottom: 1px solid #192534; padding-bottom: 0.4rem; }
+.prose h3 { font-size: 1.2rem; }
+.prose p  { margin: 1.25rem 0; }
+.prose a  { color: #22c9c9; text-decoration: underline; text-underline-offset: 3px; }
+.prose a:hover { color: #9ee4e4; }
+.prose strong { color: #e8f0f8; font-weight: 600; }
+.prose em     { color: #9eb8c8; }
+.prose blockquote {
+  border-left: 3px solid #22c9c9;
+  margin: 1.5rem 0;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  color: #7090a8;
+  font-style: italic;
+}
+.prose code {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 0.85em;
+  background: #111b27;
+  color: #9ee4e4;
+  padding: 0.15em 0.45em;
+  border-radius: 3px;
+  border: 1px solid #192534;
+}
+.prose pre {
+  background: #0d1219;
+  border: 1px solid #192534;
+  border-radius: 6px;
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.prose figure {
+  margin: 1.75rem 0;
+}
+.prose figure img {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #192534;
+}
+.prose figcaption {
+  text-align: center;
+  color: #405060;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+.prose ul,.prose ol { padding-left: 1.5rem; margin: 1rem 0; }
+.prose li { margin: 0.35rem 0; }
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
+.prose th {
+  background: #111b27;
+  color: #7090a8;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #223040;
+}
+.prose td {
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #192534;
+}
+.prose tr:last-child td { border-bottom: none; }
+.prose hr {
+  border: none;
+  border-top: 1px solid #192534;
+  margin: 2.5rem 0;
+}
+
+/* ── @uiw/react-md-editor dark theme overrides ───────────────────────────── */
+[data-color-mode="dark"] .w-md-editor {
+  background-color: #0d1219 !important;
+  color: #c8d8e8 !important;
+  border: 1px solid #192534 !important;
+  border-radius: 6px !important;
+  --md-editor-background: #0d1219;
+}
+[data-color-mode="dark"] .w-md-editor-toolbar {
+  background-color: #111b27 !important;
+  border-bottom: 1px solid #192534 !important;
+}
+[data-color-mode="dark"] .w-md-editor-toolbar li button {
+  color: #7090a8 !important;
+}
+[data-color-mode="dark"] .w-md-editor-toolbar li button:hover {
+  background: #172233 !important;
+  color: #c8d8e8 !important;
+}
+/* Container — library uses !important on font-size/line-height, match it */
+[data-color-mode="dark"] .w-md-editor-text {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.9rem !important;
+  line-height: 1.65 !important;
+}
+/*
+ * The real input class is .w-md-editor-text-input (not -text-textarea).
+ * Library sets -webkit-text-fill-color: transparent without !important,
+ * so our !important overrides it and makes text visible.
+ */
+[data-color-mode="dark"] .w-md-editor-text-input {
+  color: #e8f0f8 !important;
+  -webkit-text-fill-color: #e8f0f8 !important;
+  caret-color: #22c9c9 !important;
+}
+/*
+ * visibility:hidden keeps the pre in layout (the editor still measures it
+ * for content height / scrolling) but hides it so only the input text shows.
+ */
+[data-color-mode="dark"] .w-md-editor-text-pre {
+  visibility: hidden !important;
+}
+[data-color-mode="dark"] .w-md-editor-preview {
+  background: #0d1219 !important;
+  border-left: 1px solid #192534 !important;
+}
+[data-color-mode="dark"] .wmde-markdown {
+  background: transparent !important;
+  color: #c8d8e8 !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  font-size: 0.95rem !important;
+}
+[data-color-mode="dark"] .wmde-markdown h1,
+[data-color-mode="dark"] .wmde-markdown h2,
+[data-color-mode="dark"] .wmde-markdown h3 {
+  color: #e8f0f8 !important;
+  border-bottom-color: #192534 !important;
+}
+[data-color-mode="dark"] .wmde-markdown a { color: #22c9c9 !important; }
+[data-color-mode="dark"] .wmde-markdown code {
+  background: #111b27 !important;
+  color: #9ee4e4 !important;
+}
+[data-color-mode="dark"] .wmde-markdown pre {
+  background: #0d1219 !important;
+  border: 1px solid #192534 !important;
+}
+[data-color-mode="dark"] .wmde-markdown blockquote {
+  border-left-color: #22c9c9 !important;
+  color: #7090a8 !important;
+}
+
 @layer components {
   /* Hero dot-grid background and radial fade — cannot be expressed as Tailwind utilities */
   .lp-hero::before {
