@@ -39,6 +39,7 @@ class Article(Base):
     updated_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
     author: Mapped[str] = mapped_column(Text, nullable=False, server_default="Admin")
     slug_frozen: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    view_count: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
 
     slug_redirects: Mapped[list["SlugRedirect"]] = relationship(
         back_populates="article", cascade="all, delete-orphan"
