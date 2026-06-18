@@ -11,6 +11,15 @@ uv sync
 # Copy and fill in env vars
 cp .env.example .env
 
+# Start Postgres (Docker required)
+docker compose up -d app_postgres
+
+# Apply migrations
+uv run alembic upgrade head
+
+# (Optional) seed sample blog data
+uv run python scripts/seed_blog.py
+
 # Start dev server (hot reload)
 uv run uvicorn app.main:app --reload
 ```
@@ -20,10 +29,55 @@ Requires `ANTHROPIC_API_KEY` in `.env`. Set `OPENAI_API_KEY` too if using the Op
 ## Running tests
 
 ```bash
-uv run pytest -v
+# All tests (blog tests require Postgres to be running)
+uv run python -m pytest -v
+
+# Blog tests only
+uv run python -m pytest tests/blog/ -v
+
+# Non-blog tests (no Postgres needed)
+uv run python -m pytest tests/test_main.py tests/test_agents.py -v
 ```
 
-Rate limiting is automatically disabled in the test environment.
+Rate limiting is automatically disabled in the test environment. Blog tests hit a real Postgres instance and truncate tables between each test — no mocks.
+
+---
+
+## Database
+
+The blog feature uses PostgreSQL. The connection is read from `DATABASE_URL`.
+
+### Local dev
+
+`docker compose up -d app_postgres` starts a Postgres 16 container on port 5432.  
+Credentials: `material / material`, database: `material_agents`.  
+These are already set in `.env.example`.
+
+### Migrations
+
+Alembic manages the schema. Every `fly deploy` runs `alembic upgrade head` automatically via `release_command` in `fly.toml`.
+
+```bash
+# Apply all pending migrations
+uv run alembic upgrade head
+
+# Roll back one migration
+uv run alembic downgrade -1
+
+# Check current revision
+uv run alembic current
+
+# Auto-generate a new migration after changing models.py
+uv run alembic revision --autogenerate -m "describe your change"
+```
+
+### Seed data (local dev only)
+
+```bash
+uv run python scripts/seed_blog.py
+```
+
+Creates 2 published articles and 1 draft.
 
 ---
 
@@ -33,6 +87,8 @@ All variables are optional unless marked **required**.
 
 | Variable | Default | Description |
 |---|---|---|
+| `DATABASE_URL` | **required for blog** | PostgreSQL DSN, e.g. `postgresql://user:pass@host/db` |
+| `TEST_DATABASE_URL` | same as `DATABASE_URL` | Separate DB for tests (optional but recommended) |
 | `ANTHROPIC_API_KEY` | — | Fallback Anthropic key when user doesn't supply one |
 | `OPENAI_API_KEY` | — | Fallback OpenAI key when user doesn't supply one |
 | `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated list of allowed CORS origins |
@@ -64,6 +120,29 @@ curl -L https://fly.io/install.sh | sh
 fly auth login
 ```
 
+### Provision a PostgreSQL database
+
+You need a PostgreSQL database before the first deploy. Pick one option:
+
+**Option A — Fly.io Managed Postgres** (simplest, stays in Fly's network)
+
+```bash
+# Create a Postgres cluster (run once; choose a name and your region)
+fly postgres create --name material-agents-pg --region sin --initial-cluster-size 1 --vm-size shared-cpu-1x --volume-size 1
+
+# Attach it to the app — this sets DATABASE_URL automatically as a secret
+fly postgres attach material-agents-pg --app material-agents-backend
+```
+
+After `attach`, `DATABASE_URL` is already set. Skip the manual `fly secrets set DATABASE_URL` step below.
+
+**Option B — Neon** (serverless, free tier, external)
+
+1. Create a project at [neon.tech](https://neon.tech) and copy the connection string from the dashboard.
+2. Set it as a secret (see step 3 below).
+
+---
+
 ### First deploy
 
 Run these from the `backend/` directory:
@@ -72,17 +151,26 @@ Run these from the `backend/` directory:
 # 1. Create the app (pick a unique name and your nearest region)
 fly launch --name material-agents-backend --region sin --no-deploy
 
-# 2. Create a persistent volume for uploaded files (1 GB to start)
+# 2. Create a persistent volume for uploaded files and media (1 GB to start)
 fly volumes create uploads_data --region sin --size 1
 
 # 3. Set required secrets
 fly secrets set \
   ANTHROPIC_API_KEY="sk-ant-..." \
   OPENAI_API_KEY="sk-..." \
-  ALLOWED_ORIGINS="https://your-frontend.fly.dev" \
-  UPLOAD_DIR="/data/uploads"
+  ALLOWED_ORIGINS="https://your-frontend.vercel.app" \
+  UPLOAD_DIR="/data/uploads" \
+  BLOG_ENABLED="true" \
+  AUTH_SECRET="$(python -c 'import secrets; print(secrets.token_hex(32))')" \
+  ADMIN_USERNAME="your-admin-username" \
+  ADMIN_PASSWORD_HASH="$(uv run python scripts/gen_password_hash.py)" \
+  COOKIE_SECURE="true" \
+  MEDIA_DIR="/data/media" \
+  SITE_BASE_URL="https://your-frontend.vercel.app"
+  # DATABASE_URL — skip if you used `fly postgres attach`; otherwise set it:
+  # DATABASE_URL="postgresql://user:pass@host/db"
 
-# 4. Deploy
+# 4. Deploy — migrations run automatically via release_command in fly.toml
 fly deploy
 ```
 

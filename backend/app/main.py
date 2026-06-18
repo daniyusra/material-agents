@@ -60,8 +60,9 @@ async def lifespan(app: FastAPI):
         wa_db.init_db()
 
     if _BLOG_ENABLED:
-        from .blog import db as blog_db
+        from .blog import crud as blog_crud
         from .blog import auth as blog_auth
+        from .blog.database import open_db, close_engine
         from .blog.storage_backend import get_storage_backend
 
         try:
@@ -70,16 +71,15 @@ async def lifespan(app: FastAPI):
             log.critical("blog_auth_config_invalid", extra={"error": str(exc)})
             raise SystemExit(str(exc)) from exc
 
-        blog_db.init_db()
-
         # Purge media uploads that were never linked to an article (older than 24 h)
         storage = get_storage_backend()
-        for orphan in blog_db.get_orphaned_media(older_than_seconds=86400):
-            try:
-                storage.delete(orphan["url"])
-                blog_db.delete_media_record(orphan["id"])
-            except Exception:
-                pass
+        async with open_db() as db:
+            for orphan in await blog_crud.get_orphaned_media(db, older_than_seconds=86400):
+                try:
+                    storage.delete(orphan["url"])
+                    await blog_crud.delete_media_record(db, orphan["id"])
+                except Exception:
+                    pass
 
     log.info(
         "startup_complete",
@@ -94,6 +94,9 @@ async def lifespan(app: FastAPI):
     task.cancel()
     if _scheduler:
         _scheduler.shutdown(wait=False)
+    if _BLOG_ENABLED:
+        from .blog.database import close_engine
+        await close_engine()
     log.info("shutdown_complete")
 
 

@@ -5,19 +5,26 @@
 - **Framework:** FastAPI with Uvicorn
 - **LLM:** LangChain + LangGraph; providers: `langchain-anthropic` (Claude `claude-opus-4-7`) and `langchain-openai` (GPT-4o)
 - **Data:** pandas for DataFrame operations; Plotly for chart generation
+- **Database:** PostgreSQL via SQLAlchemy 2.x async (`asyncpg` driver) + Alembic migrations
 - **Package manager:** `uv` (preferred) or `pip`
 
 ## Running
 
 ```bash
 # Install deps
-uv sync          # or: pip install -e ".[dev]"
+uv sync
+
+# Start Postgres (Docker required)
+docker compose up -d app_postgres   # from repo root
+
+# Apply migrations
+uv run alembic upgrade head
 
 # Start dev server
 uv run uvicorn app.main:app --reload
 ```
 
-Requires `ANTHROPIC_API_KEY` in `.env` (copy from `.env.example`). Set `OPENAI_API_KEY` too if using the OpenAI provider.
+Requires `ANTHROPIC_API_KEY` and `DATABASE_URL` in `.env` (copy from `.env.example`). Set `OPENAI_API_KEY` too if using the OpenAI provider.
 
 ## Key files
 
@@ -26,6 +33,11 @@ Requires `ANTHROPIC_API_KEY` in `.env` (copy from `.env.example`). Set `OPENAI_A
 - `app/agents/chat.py` — simple LangChain chain; `stream_chat()` yields text chunks (no file)
 - `app/agents/data_agent.py` — LangGraph agent for file-backed Q&A; classifies questions, executes pandas/viz code, synthesises answers
 - `app/agents/_sandbox_runner.py` — subprocess target for sandboxed code execution (restricted builtins + AST guard + isolated env)
+- `app/blog/models.py` — SQLAlchemy 2.x declarative models (`Article`, `SlugRedirect`, `Media`)
+- `app/blog/database.py` — async engine + `get_db()` FastAPI dependency + `open_db()` context manager
+- `app/blog/crud.py` — all async DB operations; called by the router, accepts `AsyncSession`
+- `app/blog/router.py` — blog HTTP routes; injects `AsyncSession` via `Depends(get_db)`
+- `alembic/` — migration scripts; run with `uv run alembic upgrade head`
 
 ## API endpoints
 

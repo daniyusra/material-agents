@@ -20,8 +20,9 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, Form
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from . import db as blog_db
+from . import crud as blog_db
 from .auth import (
     AdminAuth,
     AdminAuthWithCsrf,
@@ -32,6 +33,7 @@ from .auth import (
     LoginRequest,
     optional_admin,
 )
+from .database import get_db
 from .image_processor import detect_image_type, ALLOWED_MIME_TYPES, process_image
 from .markdown_renderer import (
     extract_media_urls,
@@ -72,20 +74,27 @@ async def me(session_check=Depends(handle_me)):
 # ── Public article endpoints ───────────────────────────────────────────────────
 
 @router.get("/api/articles")
-async def list_articles(page: int = 1, per_page: int = 10):
+async def list_articles(
+    page: int = 1,
+    per_page: int = 10,
+    db: AsyncSession = Depends(get_db),
+):
     per_page = min(per_page, 50)
-    return blog_db.list_published_articles(page=page, per_page=per_page)
+    return await blog_db.list_published_articles(db, page=page, per_page=per_page)
 
 
 @router.get("/api/articles/{slug}")
-async def get_article(slug: str, is_admin: bool = Depends(optional_admin)):
-    article = blog_db.get_article_by_slug(slug)
+async def get_article(
+    slug: str,
+    is_admin: bool = Depends(optional_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    article = await blog_db.get_article_by_slug(db, slug)
 
     if article is None:
-        # Check if this is a permanently-redirected old slug
-        redirect = blog_db.get_redirect_for_slug(slug)
+        redirect = await blog_db.get_redirect_for_slug(db, slug)
         if redirect:
-            target = blog_db.get_article_by_id(redirect["article_id"])
+            target = await blog_db.get_article_by_id(db, redirect["article_id"])
             if target and (target["status"] == "published" or is_admin):
                 article = target
             else:
@@ -98,7 +107,6 @@ async def get_article(slug: str, is_admin: bool = Depends(optional_admin)):
 
     result = dict(article)
     result["body_html"] = render_markdown(article.get("body", ""))
-    # Strip raw body from public response
     if not is_admin:
         result.pop("body", None)
 
@@ -124,50 +132,55 @@ class ArticleUpdateRequest(BaseModel):
 
 
 @router.get("/api/admin/articles", dependencies=AdminAuth)
-async def admin_list_articles():
-    return {"articles": blog_db.list_all_articles()}
+async def admin_list_articles(db: AsyncSession = Depends(get_db)):
+    return {"articles": await blog_db.list_all_articles(db)}
 
 
 @router.get("/api/admin/articles/{article_id}", dependencies=AdminAuth)
-async def admin_get_article(article_id: int):
-    article = blog_db.get_article_by_id(article_id)
+async def admin_get_article(article_id: int, db: AsyncSession = Depends(get_db)):
+    article = await blog_db.get_article_by_id(db, article_id)
     if article is None:
         raise HTTPException(status_code=404, detail="Article not found")
     return article
 
 
 @router.post("/api/admin/articles", dependencies=AdminAuthWithCsrf, status_code=201)
-async def admin_create_article(body: ArticleCreateRequest):
+async def admin_create_article(
+    body: ArticleCreateRequest,
+    db: AsyncSession = Depends(get_db),
+):
     if not body.title.strip():
         raise HTTPException(status_code=422, detail="Title cannot be empty")
-    article = blog_db.create_article(body.title.strip())
+    article = await blog_db.create_article(db, body.title.strip())
     log.info("blog_article_created", extra={"article_id": article["id"], "slug": article["slug"]})
     return article
 
 
 @router.put("/api/admin/articles/{article_id}", dependencies=AdminAuthWithCsrf)
-async def admin_update_article(article_id: int, body: ArticleUpdateRequest):
-    existing = blog_db.get_article_by_id(article_id)
+async def admin_update_article(
+    article_id: int,
+    body: ArticleUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    existing = await blog_db.get_article_by_id(db, article_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Article not found")
 
     fields = body.model_dump(exclude_none=True)
 
-    # Collect warnings before potential status change
     warnings: list[str] = []
     if fields.get("status") == "published" and "body" in fields:
         missing = missing_alt_images(fields["body"])
         if missing:
             warnings.append(f"{len(missing)} image(s) have missing alt text")
 
-    article = blog_db.update_article(article_id, fields)
+    article = await blog_db.update_article(db, article_id, fields)
     if article is None:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    # Associate any newly-inserted media with this article
     if "body" in fields:
         urls = extract_media_urls(fields["body"])
-        blog_db.associate_media(article_id, urls)
+        await blog_db.associate_media(db, article_id, urls)
 
     log.info(
         "blog_article_updated",
@@ -177,20 +190,22 @@ async def admin_update_article(article_id: int, body: ArticleUpdateRequest):
 
 
 @router.delete("/api/admin/articles/{article_id}", dependencies=AdminAuthWithCsrf)
-async def admin_delete_article(article_id: int):
-    existing = blog_db.get_article_by_id(article_id)
+async def admin_delete_article(
+    article_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    existing = await blog_db.get_article_by_id(db, article_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    # Delete associated media files before removing the article record
     storage = get_storage_backend()
-    for media in blog_db.get_media_for_article(article_id):
+    for media in await blog_db.get_media_for_article(db, article_id):
         try:
             storage.delete(media["url"])
         except Exception:
             log.warning("blog_media_delete_failed", extra={"url": media.get("url")})
 
-    deleted = blog_db.delete_article(article_id)
+    deleted = await blog_db.delete_article(db, article_id)
     log.info("blog_article_deleted", extra={"article_id": article_id})
     return {"ok": deleted}
 
@@ -201,6 +216,7 @@ async def admin_delete_article(article_id: int):
 async def upload_media(
     file: UploadFile,
     alt_text: str = Form(default=""),
+    db: AsyncSession = Depends(get_db),
 ):
     data = await file.read()
 
@@ -230,9 +246,9 @@ async def upload_media(
 
     storage = get_storage_backend()
     main_url = storage.save(result["main"], main_filename, result["main_type"])
-    thumb_url = storage.save(result["thumb"], thumb_filename, result["thumb_type"])
+    storage.save(result["thumb"], thumb_filename, result["thumb_type"])
 
-    blog_db.record_media(main_filename, main_url, len(result["main"]), alt_text or None)
+    await blog_db.record_media(db, main_filename, main_url, len(result["main"]), alt_text or None)
 
     log.info(
         "blog_media_uploaded",
@@ -240,7 +256,7 @@ async def upload_media(
     )
     return {
         "url": main_url,
-        "thumb_url": thumb_url,
+        "thumb_url": f"/media/{thumb_filename}",
         "width": result["width"],
         "height": result["height"],
         "alt_text": alt_text,
@@ -260,8 +276,8 @@ def _format_iso(ts: int) -> str:
 
 
 @router.get("/sitemap.xml", response_class=PlainTextResponse)
-async def sitemap():
-    articles = blog_db.get_published_articles_for_feed()
+async def sitemap(db: AsyncSession = Depends(get_db)):
+    articles = await blog_db.get_published_articles_for_feed(db)
     base = _SITE_BASE_URL or "https://example.com"
 
     urls = [
@@ -292,8 +308,8 @@ async def sitemap():
 
 
 @router.get("/feed.xml", response_class=PlainTextResponse)
-async def rss_feed():
-    articles = blog_db.get_published_articles_for_feed()
+async def rss_feed(db: AsyncSession = Depends(get_db)):
+    articles = await blog_db.get_published_articles_for_feed(db)
     base = _SITE_BASE_URL or "https://example.com"
     now_rfc = _format_rfc822(int(time.time()))
 

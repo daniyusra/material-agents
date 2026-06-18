@@ -1,4 +1,21 @@
 services:
+  app_postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: material
+      POSTGRES_PASSWORD: material
+      POSTGRES_DB: material_agents
+    volumes:
+      - app_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U material -d material_agents"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -52,4 +69,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  app_postgres_data:
   evolution_postgres:
