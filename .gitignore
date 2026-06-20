@@ -214,3 +214,4 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 backend/whatsapp.db
 backend/media/
+backend/*.db
