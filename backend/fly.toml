@@ -4,6 +4,9 @@ primary_region = 'nrt'
 [build]
   dockerfile = 'Dockerfile'
 
+[deploy]
+  release_command = 'uv run alembic upgrade head'
+
 [env]
   PORT = '8080'
   UPLOAD_DIR = '/data/uploads'

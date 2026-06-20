@@ -14,7 +14,7 @@ PATH=/home/daniyusra/.nvm/versions/node/v20.20.0/bin:$PATH npm install
 PATH=/home/daniyusra/.nvm/versions/node/v20.20.0/bin:$PATH npm run dev   # → http://localhost:5173
 ```
 
-The Vite dev server proxies `/api` → `http://localhost:8000`, so the backend must be running.
+The Vite dev server proxies `/api` and `/media` → `http://localhost:8000`, so the backend must be running. Both paths are needed: `/api` for all endpoints, `/media` for blog image serving.
 
 ## Key files
 

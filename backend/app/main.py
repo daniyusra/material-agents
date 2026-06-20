@@ -13,6 +13,7 @@ from typing import Literal, Optional
 from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -36,6 +37,7 @@ log = logging.getLogger(__name__)
 # ── Config ────────────────────────────────────────────────────────────────────
 
 _WHATSAPP_ENABLED = os.getenv("WHATSAPP_ENABLED", "false").lower() == "true"
+_BLOG_ENABLED = os.getenv("BLOG_ENABLED", "false").lower() == "true"
 _ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")]
 _MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "10"))
 _MAX_MESSAGES = int(os.getenv("MAX_MESSAGES", "50"))
@@ -56,7 +58,33 @@ async def lifespan(app: FastAPI):
     count = rebuild_registry()
     if _WHATSAPP_ENABLED:
         wa_db.init_db()
-    log.info("startup_complete", extra={"restored_files": count, "whatsapp_enabled": _WHATSAPP_ENABLED})
+
+    if _BLOG_ENABLED:
+        from .blog import crud as blog_crud
+        from .blog import auth as blog_auth
+        from .blog.database import open_db, close_engine
+        from .blog.storage_backend import get_storage_backend
+
+        try:
+            blog_auth.validate_auth_config()
+        except ValueError as exc:
+            log.critical("blog_auth_config_invalid", extra={"error": str(exc)})
+            raise SystemExit(str(exc)) from exc
+
+        # Purge media uploads that were never linked to an article (older than 24 h)
+        storage = get_storage_backend()
+        async with open_db() as db:
+            for orphan in await blog_crud.get_orphaned_media(db, older_than_seconds=86400):
+                try:
+                    storage.delete(orphan["url"])
+                    await blog_crud.delete_media_record(db, orphan["id"])
+                except Exception:
+                    pass
+
+    log.info(
+        "startup_complete",
+        extra={"restored_files": count, "whatsapp_enabled": _WHATSAPP_ENABLED, "blog_enabled": _BLOG_ENABLED},
+    )
     task = asyncio.create_task(cleanup_loop())
     _scheduler = None
     if _WHATSAPP_ENABLED:
@@ -66,6 +94,9 @@ async def lifespan(app: FastAPI):
     task.cancel()
     if _scheduler:
         _scheduler.shutdown(wait=False)
+    if _BLOG_ENABLED:
+        from .blog.database import close_engine
+        await close_engine()
     log.info("shutdown_complete")
 
 
@@ -76,12 +107,33 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_credentials=True,   # required for httpOnly session cookie across origins
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "X-Requested-With"],  # X-Requested-With is the CSRF guard
 )
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
+
 
 if _WHATSAPP_ENABLED:
     app.include_router(whatsapp_router)
+
+if _BLOG_ENABLED:
+    from .blog.router import router as blog_router
+    from .blog.storage_backend import get_media_dir
+
+    app.include_router(blog_router)
+
+    _blog_media_dir = get_media_dir()
+    _blog_media_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/media", StaticFiles(directory=str(_blog_media_dir)), name="media")
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
