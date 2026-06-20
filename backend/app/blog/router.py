@@ -47,6 +47,14 @@ log = logging.getLogger(__name__)
 router = APIRouter()
 
 _SITE_BASE_URL = os.getenv("SITE_BASE_URL", "").rstrip("/")
+_MEDIA_BASE_URL = os.getenv("MEDIA_BASE_URL", "").rstrip("/")
+
+
+def _absolute_media_url(path: str) -> str:
+    """Prefix a relative /media/... path with MEDIA_BASE_URL if configured."""
+    if _MEDIA_BASE_URL and path.startswith("/"):
+        return f"{_MEDIA_BASE_URL}{path}"
+    return path
 
 
 def _max_upload_bytes() -> int:
@@ -255,8 +263,8 @@ async def upload_media(
         extra={"media_filename": main_filename, "size": len(result["main"])},
     )
     return {
-        "url": main_url,
-        "thumb_url": f"/media/{thumb_filename}",
+        "url": _absolute_media_url(main_url),
+        "thumb_url": _absolute_media_url(f"/media/{thumb_filename}"),
         "width": result["width"],
         "height": result["height"],
         "alt_text": alt_text,

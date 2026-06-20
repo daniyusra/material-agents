@@ -86,10 +86,13 @@ def render_markdown(body: str) -> str:
 
 
 def extract_media_urls(body: str) -> list[str]:
-    """Extract /media/... URLs from Markdown image syntax for media association."""
-    return re.findall(r"!\[.*?\]\((/media/[^)\s]+)\)", body)
+    """Extract /media/... URLs from Markdown image syntax for media association.
+
+    Matches both relative (/media/...) and absolute (https://host/media/...) forms.
+    """
+    return re.findall(r"!\[.*?\]\(((?:https?://[^/]+)?/media/[^)\s]+)\)", body)
 
 
 def missing_alt_images(body: str) -> list[str]:
     """Return /media/... URLs whose alt text is blank — flagged before publish."""
-    return re.findall(r"!\[\s*\]\((/media/[^)\s]+)\)", body)
+    return re.findall(r"!\[\s*\]\(((?:https?://[^/]+)?/media/[^)\s]+)\)", body)
