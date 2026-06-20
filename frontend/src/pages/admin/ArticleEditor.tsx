@@ -453,7 +453,6 @@ export default function ArticleEditor() {
     );
   }
 
-  const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
   const siteBase = import.meta.env.VITE_SITE_BASE_URL ?? window.location.origin;
 
   return (
@@ -712,7 +711,7 @@ export default function ArticleEditor() {
             {coverImageUrl && (
               <div className="relative mb-2">
                 <img
-                  src={`${API_BASE}${coverImageUrl}`}
+                  src={coverImageUrl}
                   alt="Cover"
                   className="w-full rounded-md object-cover aspect-[2/1]"
                 />
